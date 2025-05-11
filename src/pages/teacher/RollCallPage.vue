@@ -6,6 +6,8 @@ import { useAttendanceStore } from 'src/stores/attendance-store';
 import { useClassStore } from 'src/stores/class-store';
 import { useRoute, useRouter } from 'vue-router';
 import { ClassModel } from 'src/models/class.models';
+import RollCallDialog from './RollCallDialog.vue';
+import { UserModel } from 'src/models/user.models';
 type StudentKey = string;
 const route = useRoute();
 const router = useRouter();
@@ -73,12 +75,12 @@ const studentsWithStatus = computed(() => {
   return enrolledStudents.value.map((student) => {
     const studentKey = student.key || '';
     const checkIn = studentCheckIns.value.find((c) => c.key === studentKey);
-
     return {
       key: studentKey,
       name: student.fullName || 'Unknown Student',
       email: student.email || '',
-      status: selectedStatuses.value[studentKey] || 'absent',
+      avatar: student.avatar,
+      status: selectedStatuses.value[studentKey] || 'check-in',
       checkInTime: checkIn?.checkInTime || '[NO CHECKED-IN]',
       checkInKey: checkIn?.key || student.key || '',
     };
@@ -93,6 +95,9 @@ function formatDate(dateString: string) {
 }
 function updateStudentStatus(studentKey: string, status: MeetingCheckInModel['status']) {
   selectedStatuses.value[studentKey] = status;
+  if (currentCheckIn.value) {
+    currentCheckIn.value.status = status;
+  }
 }
 async function saveRollCall(isSubmit: boolean = false) {
   if (isSubmit) {
@@ -207,6 +212,68 @@ function cancelRollCall() {
     },
   });
 }
+//roll-call dialog states
+const showDialog = ref(false);
+const currentStudent = ref<UserModel>();
+const currentCheckIn = ref<MeetingCheckInModel>();
+function selectNextStudent() {
+  let nextIndex = 0;
+  if (!currentStudent.value && enrolledStudents.value.length) {
+    nextIndex = 0;
+  } else if (enrolledStudents.value.length && currentStudent.value) {
+    nextIndex = enrolledStudents.value.findIndex((s) => s.key == currentStudent.value?.key) + 1;
+  }
+  currentStudent.value = undefined;
+  while (
+    nextIndex >= 0 &&
+    nextIndex < enrolledStudents.value.length &&
+    (currentCheckIn.value?.status != 'check-in' || !currentStudent.value)
+  ) {
+    const student = enrolledStudents.value[nextIndex];
+    if (student) {
+      currentStudent.value = {
+        ...student,
+      };
+      currentCheckIn.value = studentCheckIns.value.find((c) => c.key == student.key);
+    } else {
+      currentStudent.value = undefined;
+    }
+    nextIndex++;
+  }
+  if (!currentStudent.value) {
+    showDialog.value = false;
+  }
+}
+function onCallStatus(status: MeetingCheckInModel['status'] | 'later') {
+  if (!currentStudent.value) return;
+  switch (status) {
+    case 'absent':
+    case 'check-in':
+    case 'late':
+    case 'present':
+      updateStudentStatus(currentStudent.value.key, status);
+      selectNextStudent();
+      break;
+    case 'later':
+    default:
+      selectNextStudent();
+      break;
+  }
+}
+function startRollCall() {
+  selectNextStudent();
+  if (currentStudent.value && activeClass.value) {
+    showDialog.value = true;
+  } else {
+    Notify.create({
+      message: 'All Students are marked',
+      color: 'info',
+      icon: 'info',
+      position: 'center',
+      timeout: 3000,
+    });
+  }
+}
 </script>
 
 <template>
@@ -235,6 +302,7 @@ function cancelRollCall() {
           <q-table
             :rows="studentsWithStatus"
             :columns="[
+              { name: 'avatar', label: '', field: 'avatar' },
               { name: 'name', label: 'Student Name', field: 'name', align: 'left', sortable: true },
               { name: 'checkInTime', label: 'Check-in Time', field: 'checkInTime', align: 'left' },
               { name: 'status', label: 'Status', field: 'status', align: 'center' },
@@ -242,11 +310,23 @@ function cancelRollCall() {
             row-key="key"
             :pagination="{ rowsPerPage: 0 }"
           >
+            <template v-slot:body-cell-avatar="props">
+              <q-td :props="props">
+                <q-avatar size="md">
+                  <img
+                    :src="props.row?.avatar || 'https://cdn.quasar.dev/img/avatar.png'"
+                    :alt="(props.row?.fullName || '0')?.charAt(0).toUpperCase()"
+                  />
+                </q-avatar>
+              </q-td>
+            </template>
             <template v-slot:body-cell-status="props">
               <q-td :props="props" class="q-gutter-sm">
                 <q-btn-toggle
                   v-model="selectedStatuses[props.row.key]"
                   toggle-color="primary"
+                  clearable
+                  toggle-text-color="black"
                   :options="[
                     { label: 'Present', value: 'present', color: 'green' },
                     { label: 'Late', value: 'late', color: 'orange' },
@@ -268,6 +348,7 @@ function cancelRollCall() {
             :loading="isSubmitting"
             @click="saveRollCall(true)"
           />
+          <q-btn icon="play_arrow" round color="primary" @click="startRollCall"></q-btn>
         </q-card-actions>
       </q-card>
 
@@ -276,5 +357,14 @@ function cancelRollCall() {
         <div class="q-mt-md">Loading roll call data...</div>
       </div>
     </div>
+    <RollCallDialog
+      v-if="activeClass && currentStudent && currentMeeting"
+      v-model="showDialog"
+      :current-student="currentStudent"
+      :target-meeting="currentMeeting"
+      :target-class="activeClass"
+      :current-check-in="currentCheckIn"
+      @call-status="onCallStatus"
+    />
   </q-page>
 </template>
