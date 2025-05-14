@@ -59,7 +59,7 @@ async function registerWithGoogle(role: string) {
           <q-btn class="login-button" type="submit">Login</q-btn>
         </q-form>
         <q-card-actions>
-          <q-btn class="login-button" @click="continueWithGoogle()">Continue with Google</q-btn>
+          <span class="gbutton" @click="continueWithGoogle()">Continue with Google</span>
         </q-card-actions>
       </q-card-section>
       <div v-else>
@@ -91,16 +91,15 @@ async function registerWithGoogle(role: string) {
 }
 .my-card {
   max-width: 400px;
-  margin: auto;
+  margin: 0;
   width: 100%;
-  margin-top: 100px;
-  height: 400px;
+  height: 450px;
 }
 .page-center {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 200vh;
+  height: 90vh;
   background-color: #f8f4e1;
   flex-direction: column;
 }
@@ -153,8 +152,24 @@ async function registerWithGoogle(role: string) {
   padding: 15px;
   padding-left: 20px;
   padding-right: 20px;
+  width: 140px;
+
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
 }
 .tableacc {
   width: 100%;
 }
+
+.gbutton{
+    color: blue;
+    align-items: center;
+    display: block;
+    text-decoration: underline;
+    margin-top: 5px;
+
+  }
+  .gbutton:hover{
+    color: lightblue;
+    cursor: pointer;
+  }
 </style>
