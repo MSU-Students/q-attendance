@@ -62,14 +62,19 @@ async function registerWithGoogle(role: string) {
           <span class="gbutton" @click="continueWithGoogle()">Continue with Google</span>
         </q-card-actions>
       </q-card-section>
+
       <div v-else>
-        Select your role
-        <q-btn @click="registerWithGoogle('student')">student</q-btn>
-        <q-btn @click="registerWithGoogle('teacher')">teacher</q-btn>
-        <q-btn @click="registerWithGoogle('supervisor')">supervisor</q-btn>
-        <q-btn @click="registerWithGoogle('admin')">admin</q-btn>
+        <div class="roletxt">Select Role</div>
+        <div class="rolebutt">
+        <q-btn class="custom-btn" @click="registerWithGoogle('student')">student</q-btn>
+        <q-btn class="custom-btn" @click="registerWithGoogle('teacher')">teacher</q-btn>
+        <q-btn class="custom-btn" @click="registerWithGoogle('supervisor')">supervisor</q-btn>
+        <q-btn class="custom-btn" @click="registerWithGoogle('admin')">admin</q-btn>
       </div>
+        </div>
+
     </q-card>
+
 
     <div>
       <router-view />
@@ -172,4 +177,31 @@ async function registerWithGoogle(role: string) {
     color: lightblue;
     cursor: pointer;
   }
+
+  .custom-btn{
+  background-color: #800000;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+}
+
+.rolebutt{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5rem;
+}
+
+.roletxt{
+  text-align: center;
+  padding: 10px;
+  background-color: #800000;
+  border-radius: 5px;
+  color:white;
+  font-size: 15px;
+}
+
 </style>

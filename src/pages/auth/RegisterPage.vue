@@ -51,12 +51,8 @@ async function continueWithGoogle() {
       </div>
       <img class="bgregister" src="/src/assets/newbg3.png">
 
-      <q-card
-        v-if="!askRole"
-        class="my-card absolute-center"
-
-      >
-        <q-card-section>
+      <q-card class="my-card absolute-center">
+        <q-card-section v-if="!askRole">
           <img class="msupic" src="/src/assets/msulogo2.png" height="80px" width="80px" />
           <q-form @submit="onSubmit">
             <div class="row">
@@ -68,15 +64,17 @@ async function continueWithGoogle() {
           </q-form>
           <span @click="continueWithGoogle" class="googlebtn">Continue with Google.</span>
         </q-card-section>
-      </q-card>
 
       <div v-else>
-        Select your role
-        <q-btn @click="register('student')">student</q-btn>
-        <q-btn @click="register('teacher')">teacher</q-btn>
-        <q-btn @click="register('supervisor')">supervisor</q-btn>
-        <q-btn @click="register('admin')">admin</q-btn>
+        <div class="roletxt">Select your role</div>
+        <div class="rolesss">
+        <q-btn class="custom-btn" @click="register('student')">student</q-btn>
+        <q-btn class="custom-btn" @click="register('teacher')">teacher</q-btn>
+        <q-btn class="custom-btn" @click="register('supervisor')">supervisor</q-btn>
+        <q-btn class="custom-btn" @click="register('admin')">admin</q-btn>
       </div>
+      </div>
+    </q-card>
 
       <div>
         <router-view />
@@ -105,8 +103,8 @@ async function continueWithGoogle() {
   }
 
   .my-card{
-    background: rgba(255, 255, 255, 0.2);           /* semi-transparent */
-  backdrop-filter: blur(15px);                    /* blur effect */
+    background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
     flex: center;
     margin: auto;
     width: 400px;
@@ -153,5 +151,29 @@ async function continueWithGoogle() {
     cursor: pointer;
   }
 
+.custom-btn{
+  background-color: #800000;
+    color: white;
+    padding: 10px 10px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+}
+
+.rolesss{
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 5rem;
+}
+.roletxt{
+  text-align: center;
+  padding: 10px;
+  background-color: #800000;
+  border-radius: 5px;
+  color: white;
+  font-size: 15px;
+}
 
 </style>
