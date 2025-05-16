@@ -3,7 +3,7 @@ import { useClassStore } from 'src/stores/class-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Notify, Dialog } from 'quasar';
+import { Notify, Dialog, copyToClipboard } from 'quasar';
 import { ClassModel } from 'src/models/class.models';
 
 const classStore = useClassStore();
@@ -102,6 +102,52 @@ function navigateToClass(cls: { key?: string }) {
   void router.push({ name: 'studentClass', params: { classKey: cls.key } });
 }
 
+function getRandomColor(key: string): string {
+  const colors: string[] = [
+    '#790622', // Primary theme color
+    '#1a73e8', // Blue
+    '#4285f4', // Light blue
+    '#34a853', // Green
+    '#fbbc04', // Yellow
+    '#ea4335', // Red
+    '#9c27b0', // Purple
+    '#0097a7', // Teal
+    '#ff6d00', // Orange
+    '#795548', // Brown
+  ];
+
+  if (!key) return colors[0] as string;
+
+  const keyChars = key.split('');
+
+  const index = keyChars.reduce((sum, char) => sum + char.charCodeAt(0), 0) % colors.length;
+  return (colors[index] || colors[0]) as string;
+}
+
+function copyClassCode(cls: ClassModel): void {
+  if (!cls || !cls.classCode) return;
+
+  copyToClipboard(cls.classCode)
+    .then(() => {
+      Notify.create({
+        message: 'Class code copied to clipboard!',
+        color: 'positive',
+        icon: 'content_copy',
+        position: 'top',
+        timeout: 2000,
+      });
+    })
+    .catch(() => {
+      Notify.create({
+        message: 'Failed to copy class code',
+        color: 'negative',
+        icon: 'error',
+        position: 'top',
+        timeout: 2000,
+      });
+    });
+}
+
 async function unenrollCourse(cls: ClassModel) {
   if (!cls.key || !authStore.currentAccount?.key) {
     return;
@@ -179,68 +225,87 @@ async function unenrollCourse(cls: ClassModel) {
 
 <template>
   <q-page class="q-pa-md">
-    <div class="row q-col-gutter-md">
-      <div class="col-12">
-        <q-card>
-          <q-card-section>
-            <div class="text-h6">My Classes</div>
+    <div class="row q-col-gutter-md" style="margin-top: 0.5rem">
+      <div
+        v-for="theClass in studentClasses"
+        :key="String(theClass.key)"
+        class="col-12 col-sm-6 col-md-4 col-lg-3"
+      >
+        <q-card class="class-card" @click="navigateToClass(theClass)">
+          <q-card-section
+            class="class-card-header"
+            :style="{
+              backgroundColor: getRandomColor(theClass.key || ''),
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }"
+          >
+            <div class="row items-center no-wrap full-width justify-between">
+              <div class="text-h6 ellipsis">{{ theClass.name }}</div>
+              <q-btn round flat color="white" icon="more_vert" size="sm" @click.stop>
+                <q-menu>
+                  <q-list style="min-width: 150px">
+                    <q-item clickable v-close-popup @click="copyClassCode(theClass)">
+                      <q-item-section avatar>
+                        <q-icon name="content_copy" color="primary" />
+                      </q-item-section>
+                      <q-item-section>Copy class code</q-item-section>
+                    </q-item>
+                    <q-separator />
+                    <q-item clickable v-close-popup @click="unenrollCourse(theClass)">
+                      <q-item-section avatar>
+                        <q-icon name="delete" color="red" />
+                      </q-item-section>
+                      <q-item-section>Unenroll</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-btn>
+            </div>
+            <div class="text-subtitle2">{{ theClass.section }}</div>
           </q-card-section>
 
-          <q-list bordered separator>
-            <q-item
-              v-for="theClass in studentClasses"
-              :key="String(theClass.key)"
-              clickable
-              v-ripple
-              @click="navigateToClass(theClass)"
-            >
-              <q-item-section avatar>
-                <q-avatar color="primary" text-color="white">
-                  {{ theClass.name[0] }}
-                </q-avatar>
-              </q-item-section>
+          <q-card-section>
+            <div class="row items-center" style="padding-bottom: 40px">
+              <div class="q-ml-sm">
+                <div class="text-caption">Class Code: {{ theClass.classCode }}</div>
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
 
-              <q-item-section>
-                <q-item-label>{{ theClass.name }} - {{ theClass.section }}</q-item-label>
-                <q-item-label caption>{{ theClass.academicYear }}</q-item-label>
-              </q-item-section>
-
-              <q-item-section side>
-                <q-btn color="red" icon="delete" dense round @click.stop="unenrollCourse(theClass)">
-                  <q-tooltip>Unenroll</q-tooltip>
-                </q-btn>
-              </q-item-section>
-            </q-item>
-
-            <q-item v-if="studentClasses.length === 0">
-              <q-item-section>
-                <q-item-label class="text-center text-grey">
-                  You are not enrolled in any classes yet.
-                  <div class="q-mt-sm">
-                    <q-btn color="primary" label="Enroll in a Class" @click="openEnrollDialog" />
-                  </div>
-                </q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
+      <div v-if="studentClasses.length === 0" class="col-12">
+        <q-card class="text-center q-pa-md">
+          <q-card-section>
+            <q-icon name="school" size="4rem" color="grey-5" />
+            <div class="text-h6 q-mt-md text-grey">You are not enrolled in any classes yet</div>
+            <div class="text-caption q-mt-sm">Click the + button to enroll in a class</div>
+            <div class="q-mt-md">
+              <q-btn color="primary" label="Enroll in a Class" @click="openEnrollDialog" />
+            </div>
+          </q-card-section>
         </q-card>
       </div>
     </div>
 
-    <q-page-sticky position="bottom-right" :offset="[18, 18]">
-      <q-btn fab icon="add" color="accent" @click="openEnrollDialog" />
-    </q-page-sticky>
-
     <q-dialog v-model="showEnrollDialog" persistent>
-      <q-card style="min-width: 350px">
-        <q-card-section>
-          <div class="text-h6">Enroll in a Class</div>
+      <q-card style="min-width: 450px">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6">Join class</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
         <q-card-section>
+          <p class="text-caption q-mb-md">
+            Ask your teacher for the class code, then enter it here.
+          </p>
           <q-input
             v-model="classCode"
-            label="Enter Class Code"
+            label="Class code"
+            outlined
+            class="q-mb-md"
             :error="!!codeError"
             :error-message="codeError"
             :rules="[
@@ -249,17 +314,18 @@ async function unenrollCourse(cls: ClassModel) {
             ]"
             @keyup.enter="enrollInClass"
           />
-          <div class="text-caption q-mt-sm">
-            Enter the class code provided by your teacher to enroll in the class.
+          <div class="text-caption q-mt-sm text-grey-8">
+            <q-icon name="info" size="xs" class="q-mr-xs" />
+            Class codes contain 4-7 letters or numbers with no spaces or symbols
           </div>
         </q-card-section>
 
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" color="negative" v-close-popup />
+        <q-card-actions align="right" class="q-pa-md">
+          <q-btn flat label="Cancel" color="grey-7" v-close-popup />
           <q-btn
-            flat
-            label="Enroll"
-            color="positive"
+            unelevated
+            label="Join"
+            color="primary"
             @click="enrollInClass"
             :loading="isLoading"
             :disable="!classCode"
@@ -269,3 +335,45 @@ async function unenrollCourse(cls: ClassModel) {
     </q-dialog>
   </q-page>
 </template>
+
+<style scoped>
+.class-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 100%;
+  box-shadow:
+    0 1px 2px 0 rgba(60, 64, 67, 0.3),
+    0 1px 3px 1px rgba(60, 64, 67, 0.15);
+}
+
+.class-card:hover {
+  box-shadow:
+    0 2px 10px 0 rgba(60, 64, 67, 0.3),
+    0 6px 10px 4px rgba(60, 64, 67, 0.15);
+  transform: translateY(-2px);
+}
+
+.class-card-header {
+  background-color: #790622;
+  color: white;
+  padding-bottom: 12px;
+}
+
+.ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80%;
+}
+
+.add-class-btn {
+  box-shadow: 0 2px 10px 0 rgba(60, 64, 67, 0.3);
+  border: 1px solid #dadce0;
+}
+
+.add-class-btn:hover {
+  box-shadow: 0 4px 12px 0 rgba(60, 64, 67, 0.4);
+}
+</style>
