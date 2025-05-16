@@ -119,7 +119,7 @@ const testimonials = [
   },
   {
     name: 'Mohaymen Omar',
-    role: 'Lead Developer',
+    role: 'Developer',
     image:
       'https://lh3.googleusercontent.com/a/ACg8ocJXxAYoLL8jr6Thv6ME3C_l5zknqDfUSQGRUPOg_PcpG-_wvLo0=s96-c',
     rating: 5,
