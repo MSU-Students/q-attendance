@@ -59,17 +59,22 @@ async function registerWithGoogle(role: string) {
           <q-btn class="login-button" type="submit">Login</q-btn>
         </q-form>
         <q-card-actions>
-          <q-btn class="login-button" @click="continueWithGoogle()">Continue with Google</q-btn>
+          <span class="gbutton" @click="continueWithGoogle()">Continue with Google</span>
         </q-card-actions>
       </q-card-section>
+
       <div v-else>
-        Select your role
-        <q-btn @click="registerWithGoogle('student')">student</q-btn>
-        <q-btn @click="registerWithGoogle('teacher')">teacher</q-btn>
-        <q-btn @click="registerWithGoogle('supervisor')">supervisor</q-btn>
-        <q-btn @click="registerWithGoogle('admin')">admin</q-btn>
+        <div class="roletxt">Select Role</div>
+        <div class="rolebutt">
+        <q-btn class="custom-btn" @click="registerWithGoogle('student')">student</q-btn>
+        <q-btn class="custom-btn" @click="registerWithGoogle('teacher')">teacher</q-btn>
+        <q-btn class="custom-btn" @click="registerWithGoogle('supervisor')">supervisor</q-btn>
+        <q-btn class="custom-btn" @click="registerWithGoogle('admin')">admin</q-btn>
       </div>
+        </div>
+
     </q-card>
+
 
     <div>
       <router-view />
@@ -91,16 +96,15 @@ async function registerWithGoogle(role: string) {
 }
 .my-card {
   max-width: 400px;
-  margin: auto;
+  margin: 0;
   width: 100%;
-  margin-top: 100px;
-  height: 400px;
+  height: 450px;
 }
 .page-center {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 200vh;
+  height: 90vh;
   background-color: #f8f4e1;
   flex-direction: column;
 }
@@ -153,8 +157,51 @@ async function registerWithGoogle(role: string) {
   padding: 15px;
   padding-left: 20px;
   padding-right: 20px;
+  width: 140px;
+
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
 }
 .tableacc {
   width: 100%;
 }
+
+.gbutton{
+    color: blue;
+    align-items: center;
+    display: block;
+    text-decoration: underline;
+    margin-top: 5px;
+
+  }
+  .gbutton:hover{
+    color: lightblue;
+    cursor: pointer;
+  }
+
+  .custom-btn{
+  background-color: #800000;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+}
+
+.rolebutt{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5rem;
+}
+
+.roletxt{
+  text-align: center;
+  padding: 10px;
+  background-color: #800000;
+  border-radius: 5px;
+  color:white;
+  font-size: 15px;
+}
+
 </style>
