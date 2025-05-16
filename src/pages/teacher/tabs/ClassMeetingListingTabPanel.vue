@@ -159,6 +159,7 @@ function startRollCall(meeting: ClassMeetingModel) {
     <attendance-details-dialog
       v-if="selectedMeeting"
       :meeting="selectedMeeting"
+      :target-class="cls"
       v-model:show="showAttendanceDetails"
     />
   </q-tab-panel>

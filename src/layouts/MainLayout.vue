@@ -1,21 +1,12 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
-      <q-toolbar>
-        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
+    <q-header elevated >
+      <q-toolbar class="headerstyle">
 
-        <q-toolbar-title> Quasar Attendance System </q-toolbar-title>
+        <q-toolbar-title class="textstyle" > Quasar Attendance System </q-toolbar-title>
 
       </q-toolbar>
     </q-header>
-
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
-      <q-list>
-        <q-item-label header> Menu </q-item-label>
-
-        <EssentialLink v-for="link in linksList" :key="link.title" v-bind="link" />
-      </q-list>
-    </q-drawer>
 
     <q-page-container>
       <router-view />
@@ -24,25 +15,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import EssentialLink, { type EssentialLinkProps } from 'components/EssentialLink.vue';
 
-const linksList: EssentialLinkProps[] = [
-  {
-    title: 'Home',
-    icon: 'home',
-    link: '/',
-  },
-  {
-    title: 'Classes',
-    icon: 'school',
-    link: '/class',
-  },
-];
-
-const leftDrawerOpen = ref(false);
-
-function toggleLeftDrawer() {
-  leftDrawerOpen.value = !leftDrawerOpen.value;
-}
 </script>
+
+<style>
+ .headerstyle{
+  background-color: #800000;
+  color: white;
+  padding-bottom: 1rem;
+ }
+ .textstyle{
+  font-size: 26px;
+  font-weight: bolder;
+  margin-left: 12px;
+
+ }
+</style>

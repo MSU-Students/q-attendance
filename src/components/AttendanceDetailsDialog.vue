@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
-import { date, Dialog, Notify } from 'quasar';
-import { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
-import { useUsersStore } from 'src/stores/user-store';
+import { computed, onMounted, ref } from 'vue';
+import { Dialog, Notify } from 'quasar';
+import { ClassMeetingModel } from 'src/models/attendance.models';
 import { useAttendanceStore } from 'src/stores/attendance-store';
-import { useClassStore } from 'src/stores/class-store';
+import { ClassModel } from 'src/models/class.models';
+import { formatDate, getStatusColor, getStatusLabel } from 'src/pages/student/tabs/helpers';
 
 const props = defineProps<{
   meeting: ClassMeetingModel;
+  targetClass: ClassModel;
   show: boolean;
 }>();
 
@@ -16,97 +17,44 @@ const emit = defineEmits<{
   (e: 'attendance-updated'): void;
 }>();
 
-const usersStore = useUsersStore();
 const attendanceStore = useAttendanceStore();
-const classStore = useClassStore();
-
+const currentMeeting = ref<ClassMeetingModel>();
 const isUpdating = ref(false);
-const enrolledStudentIds = ref<string[]>([]);
-
 onMounted(async () => {
-  if (props.meeting.classKey) {
-    const existingClass = classStore.teaching.find((c) => c.key === props.meeting.classKey);
-    if (!existingClass) {
-      await classStore.loadClass(props.meeting.classKey);
-    }
-
-    const classData = classStore.teaching.find((c) => c.key === props.meeting.classKey);
-    if (classData?.enrolled) {
-      enrolledStudentIds.value = classData.enrolled.map((e) => e.key);
-    }
-  }
+  currentMeeting.value = await attendanceStore.loadMeeting(props.meeting.key);
 });
-
-const checkInsWithStudentNames = computed(() => {
-  if (!props.meeting.checkIns) return [];
-
-  return props.meeting.checkIns.map((checkIn) => {
-    const student = usersStore.users.find((user) => user.key === checkIn.key);
-    return {
-      ...checkIn,
-      studentName: student?.fullName || 'Unknown Student',
-    };
-  });
+const allCheckIns = computed(() => {
+  return currentMeeting.value?.checkIns || [];
+});
+const checkedInStudents = computed(() => {
+  if (!allCheckIns.value.length) return [];
+  return allCheckIns.value
+    .map((checkIn) => {
+      const student = (props.targetClass.enrolled || []).find((user) => user.key === checkIn.key);
+      return {
+        ...checkIn,
+        avatar: student?.avatar || '',
+        studentName: student?.fullName || 'Unknown Student',
+      };
+    })
+    .filter((c) => c.status != 'absent');
 });
 
 const absentStudents = computed(() => {
-  if (!props.meeting.checkIns || enrolledStudentIds.value.length === 0) return [];
+  if (!allCheckIns.value.length) return [];
 
-  const checkedInStudentIds = props.meeting.checkIns.map((checkIn) => checkIn.key);
-
-  return usersStore.users
-    .filter(
-      (user) =>
-        enrolledStudentIds.value.includes(user.key || '') &&
-        !checkedInStudentIds.includes(user.key || '') &&
-        user.role === 'student',
-    )
-    .map((student) => ({
-      key: '',
-      student: student.key || '',
-      studentName: student.fullName || 'Unknown Student',
-      checkInTime: '-',
-      status: 'absent' as MeetingCheckInModel['status'],
-    }));
+  return (props.targetClass.enrolled || [])
+    .map((student) => {
+      const checkIn = allCheckIns.value?.find((c) => c.key == student.key);
+      return {
+        student: student.key || '',
+        studentName: student.fullName || 'Unknown Student',
+        checkInTime: checkIn?.checkInTime || '-',
+        status: checkIn?.status || 'absent',
+      };
+    })
+    .filter((c) => c.status == 'absent');
 });
-
-function formatDate(dateString: string) {
-  try {
-    return date.formatDate(dateString, 'MMMM D, YYYY - HH:mm');
-  } catch {
-    return dateString;
-  }
-}
-
-function getStatusColor(status: MeetingCheckInModel['status']): string {
-  switch (status) {
-    case 'present':
-      return 'green';
-    case 'check-in':
-      return 'blue';
-    case 'late':
-      return 'orange';
-    case 'absent':
-      return 'red';
-    default:
-      return 'grey';
-  }
-}
-
-function getStatusLabel(status: MeetingCheckInModel['status']): string {
-  switch (status) {
-    case 'present':
-      return 'Present';
-    case 'check-in':
-      return 'Checked In (Not Yet Present)';
-    case 'late':
-      return 'Late';
-    case 'absent':
-      return 'Absent';
-    default:
-      return status;
-  }
-}
 
 function closeAttendanceSession() {
   Dialog.create({
@@ -240,34 +188,37 @@ function reopenAttendanceSession() {
       </q-card-section>
 
       <q-card-section>
-        <div class="text-h6 q-mb-md">Student Attendance</div>
+        <div></div>
 
         <q-list bordered separator>
-          <q-item v-for="checkIn in checkInsWithStudentNames" :key="checkIn.key" class="q-my-sm">
+          <q-item-label header class="text-h5 q-mb-md bg-primary">Student Attendance</q-item-label>
+          <q-item v-for="student in checkedInStudents" :key="student.key" class="q-my-sm">
             <q-item-section>
-              <q-item-label>{{ checkIn.studentName }}</q-item-label>
-              <q-item-label caption> Check-in time: {{ checkIn.checkInTime }} </q-item-label>
+              <q-item-label>{{ student.studentName }}</q-item-label>
+              <q-item-label caption> Check-in time: {{ student.checkInTime }} </q-item-label>
             </q-item-section>
 
             <q-item-section side>
-              <q-badge :color="getStatusColor(checkIn.status)">
-                {{ getStatusLabel(checkIn.status) }}
+              <q-badge :color="getStatusColor(student.status)">
+                {{ getStatusLabel(student.status) }}
               </q-badge>
             </q-item-section>
           </q-item>
-
+          <q-item-label v-if="absentStudents.length" header class="text-h5 q-mb-md bg-primary"
+            >Absent</q-item-label
+          >
           <q-item v-for="student in absentStudents" :key="student.student" class="q-my-sm">
             <q-item-section>
               <q-item-label>{{ student.studentName }}</q-item-label>
-              <q-item-label caption> Not checked in </q-item-label>
+              <q-item-label caption> Check-in time: {{ student.checkInTime }} </q-item-label>
             </q-item-section>
 
             <q-item-section side>
-              <q-badge color="red"> Not Checked In </q-badge>
+              <q-badge color="red"> {{ getStatusLabel(student.status) }} </q-badge>
             </q-item-section>
           </q-item>
 
-          <q-item v-if="checkInsWithStudentNames.length === 0 && absentStudents.length === 0">
+          <q-item v-if="checkedInStudents.length === 0 && absentStudents.length === 0">
             <q-item-section>
               <q-item-label class="text-center text-grey"
                 >No attendance data available</q-item-label

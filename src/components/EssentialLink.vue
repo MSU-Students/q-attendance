@@ -11,13 +11,22 @@
   </q-item> -->
 
   <div class="items">
-    <q-btn no-caps :flat="!isActive" padding="15px 15px" align="left" class="buttons" :class="{ 'active-button': isActive }" :to="link" :icon="icon" :label="title" >
+    <q-btn
+      no-caps
+      :flat="!isActive"
+      padding="15px 15px"
+      align="left"
+      class="buttons"
+      :class="{ 'active-button': isActive }"
+      :to="link"
+      :icon="icon"
+      :label="title"
+    >
       <q-tooltip v-if="caption?.length != 0">
-        {{  caption }}
+        {{ caption }}
       </q-tooltip>
     </q-btn>
   </div>
-  
 </template>
 
 <script setup lang="ts">
