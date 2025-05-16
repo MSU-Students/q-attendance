@@ -112,7 +112,7 @@ function goToLogin() {
       <div class="register-image-container">
         <div class="overlay">
           <div class="logo-container">
-            <img src="/src/assets/msulogo2.png" alt="MSU Logo" class="msu-logo" />
+            <img src="~assets/msulogo2.png" alt="MSU Logo" class="msu-logo" />
             <h1 class="app-title">Q-Attendance</h1>
           </div>
           <div class="tagline">
@@ -234,7 +234,7 @@ function goToLogin() {
               outline
               no-caps
             >
-              <q-icon name="img:/src/assets/google-icon.svg" size="18px" class="q-mr-sm" />
+              <q-icon name="img:~assets/google-icon.svg" size="18px" class="q-mr-sm" />
               Google
             </q-btn>
 
