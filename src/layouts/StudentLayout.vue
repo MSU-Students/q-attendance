@@ -39,42 +39,49 @@ function openEnrollDialog() {
 
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header style="margin: 1rem; border-radius: 10px">
+    <q-header class="header-container">
       <q-toolbar class="classroom-toolbar">
         <div class="row items-center no-wrap full-width">
-          <div class="row items-center">
+          <div class="row items-center header-left">
             <q-btn flat round dense icon="menu" @click="drawer = !drawer" />
 
-            <q-avatar class="q-ml-sm" size="32px">
+            <q-avatar class="q-ml-sm app-logo" size="32px">
               <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
             </q-avatar>
 
-            <q-toolbar-title class="text-primary q-ml-sm">
-              Hi,
-              {{
+            <q-toolbar-title class="text-primary q-ml-sm username-title">
+              <span class="greeting">Hi,</span>
+              <span class="name">{{
                 authStore.currentAccount?.fullName
                   ? authStore.currentAccount?.fullName.split(' ')[0]
                   : ''
-              }}
+              }}</span>
             </q-toolbar-title>
           </div>
 
           <q-space />
 
-          <div class="row items-center q-gutter-sm">
-            <q-btn flat round icon="add" color="grey-8" @click="openEnrollDialog">
+          <div class="row items-center header-actions">
+            <q-btn
+              flat
+              round
+              icon="add"
+              color="grey-8"
+              @click="openEnrollDialog"
+              class="action-btn"
+            >
               <q-tooltip>Join class</q-tooltip>
             </q-btn>
 
-            <q-btn flat round>
+            <q-btn flat round class="avatar-btn">
               <q-avatar size="32px">
                 <img
                   :src="authStore.currentAccount?.avatar || 'https://cdn.quasar.dev/img/avatar.png'"
                 />
               </q-avatar>
-              <q-menu>
+              <q-menu anchor="bottom right" self="top right">
                 <q-list style="min-width: 200px">
-                  <q-item>
+                  <q-item class="user-info">
                     <q-item-section avatar>
                       <q-avatar>
                         <img
@@ -86,8 +93,12 @@ function openEnrollDialog() {
                       </q-avatar>
                     </q-item-section>
                     <q-item-section>
-                      <q-item-label>{{ authStore.currentAccount?.fullName }}</q-item-label>
-                      <q-item-label caption>{{ authStore.currentAccount?.email }}</q-item-label>
+                      <q-item-label class="ellipsis">{{
+                        authStore.currentAccount?.fullName
+                      }}</q-item-label>
+                      <q-item-label caption class="ellipsis">{{
+                        authStore.currentAccount?.email
+                      }}</q-item-label>
                     </q-item-section>
                   </q-item>
                   <q-separator />
@@ -147,10 +158,91 @@ function openEnrollDialog() {
 </template>
 
 <style scoped>
+.header-container {
+  margin: 1rem;
+  border-radius: 10px;
+
+  @media (max-width: 599px) {
+    margin: 0.5rem;
+  }
+}
+
 .classroom-toolbar {
   height: 64px;
   padding: 0 16px;
   border-bottom: 1px solid #e0e0e0;
+
+  @media (max-width: 599px) {
+    height: 56px;
+    padding: 0 8px;
+  }
+}
+
+.header-left {
+  flex-shrink: 0;
+  max-width: 60%;
+
+  .app-logo {
+    @media (max-width: 350px) {
+      display: none;
+    }
+  }
+}
+
+.username-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 1.1rem;
+
+  @media (max-width: 599px) {
+    font-size: 1rem;
+    max-width: 120px;
+  }
+
+  .greeting {
+    @media (max-width: 350px) {
+      display: none;
+    }
+  }
+
+  .name {
+    display: inline-block;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+  }
+}
+
+.header-actions {
+  gap: 8px;
+
+  @media (max-width: 599px) {
+    gap: 4px;
+  }
+
+  .action-btn {
+    @media (max-width: 599px) {
+      padding: 4px;
+    }
+  }
+
+  .avatar-btn {
+    @media (max-width: 599px) {
+      padding: 4px;
+    }
+  }
+}
+
+.user-info {
+  max-width: 200px;
+
+  .q-item-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .classroom-drawer {
