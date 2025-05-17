@@ -9,36 +9,33 @@ const authStore = useAuthStore();
 const drawer = ref(false);
 
 const navLinks = [
-  { label: 'Home', path: '/#home', target: 'home' },
-  { label: 'Features', path: '/#features', target: 'features' },
-  { label: 'About', path: '/#about', target: 'about' },
-  { label: 'Contact', path: '/#contact', target: 'contact' },
+  { label: 'Home', target: 'home' },
+  { label: 'Features', target: 'features' },
+  { label: 'About', target: 'about' },
+  { label: 'Contact', target: 'contact' }
 ];
 
 // Function to scroll to section
 const scrollToSection = (targetId: string) => {
-  // Close drawer if open
   if (drawer.value) {
     drawer.value = false;
   }
-
-  // If we're not on the home page, navigate there first
   if (route.path !== '/') {
     void router.push('/').then(() => {
-      // Wait for navigation to complete
       setTimeout(() => {
         const element = document.getElementById(targetId);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 100);
+      }, 300);
     });
   } else {
-    // We're already on the home page, just scroll
-    const element = document.getElementById(targetId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    setTimeout(() => {
+      const element = document.getElementById(targetId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   }
 };
 
