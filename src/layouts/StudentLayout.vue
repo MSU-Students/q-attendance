@@ -1,35 +1,31 @@
 <script setup lang="ts">
 import EssentialLink, { EssentialLinkProps } from 'src/components/EssentialLink.vue';
 import { useAuthStore } from 'src/stores/auth-store';
+import { useClassStore } from 'src/stores/class-store';
 import { useLogout } from 'src/utils/redirect';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
 const { logout } = useLogout();
 const authStore = useAuthStore();
+const classStore = useClassStore();
 const router = useRouter();
 
 const drawer = ref(false);
-const miniState = ref(false);
 
 const linksList: EssentialLinkProps[] = [
   {
-    title: 'Dashboard',
-    icon: 'space_dashboard',
+    title: 'Home',
+    icon: 'home',
     link: '/student',
-  },
-  {
-    title: 'My Classes',
-    icon: 'school',
-    link: '/student/classes',
   },
 ];
 
-function drawerClick() {
-  if (miniState.value) {
-    miniState.value = false;
+onMounted(async () => {
+  if (authStore.currentAccount?.key) {
+    await classStore.loadUserClasses(authStore.currentAccount.key);
   }
-}
+});
 
 function openEnrollDialog() {
   void router.push('/student').then(() => {
@@ -43,24 +39,72 @@ function openEnrollDialog() {
 
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header style="margin: 1rem; margin-left: 1.5rem; border-radius: 10px">
-      <q-toolbar class="q-toolbar">
-        <q-btn flat round dense icon="menu" @click="drawer = !drawer" />
+    <q-header class="header-container">
+      <q-toolbar class="classroom-toolbar">
+        <div class="row items-center no-wrap full-width">
+          <div class="row items-center header-left">
+            <q-btn flat round dense icon="menu" @click="drawer = !drawer" />
 
-        <q-toolbar-title>Hi, {{ authStore.currentAccount?.fullName }}!</q-toolbar-title>
+            <q-toolbar-title class="q-ml-sm username-title">
+              <span class="greeting">Hi, </span>
+              <span class="name">{{
+                authStore.currentAccount?.fullName
+                  ? authStore.currentAccount?.fullName.split(' ')[0]
+                  : ''
+              }}</span>
+            </q-toolbar-title>
+          </div>
 
-        <div class="q-gutter-sm">
-          <q-btn flat :size="'md'" round icon="add" @click="openEnrollDialog" />
-          <q-btn flat round>
-            <q-avatar>
-              <img
-                :src="authStore.currentAccount?.avatar || 'https://cdn.quasar.dev/img/avatar.png'"
-              />
-            </q-avatar>
-            <q-menu>
-              <q-btn color="primary" label="Logout" @click="logout" />
-            </q-menu>
-          </q-btn>
+          <q-space />
+
+          <div class="row items-center header-actions">
+            <q-btn
+              flat
+              round
+              icon="add"
+              color="grey-8"
+              @click="openEnrollDialog"
+              class="action-btn"
+            >
+              <q-tooltip>Join class</q-tooltip>
+            </q-btn>
+
+            <q-btn flat round class="avatar-btn">
+              <q-avatar size="32px">
+                <img
+                  :src="authStore.currentAccount?.avatar || 'https://cdn.quasar.dev/img/avatar.png'"
+                />
+              </q-avatar>
+              <q-menu anchor="bottom right" self="top right">
+                <q-list style="min-width: 200px">
+                  <q-item class="user-info">
+                    <q-item-section avatar>
+                      <q-avatar>
+                        <img
+                          :src="
+                            authStore.currentAccount?.avatar ||
+                            'https://cdn.quasar.dev/img/avatar.png'
+                          "
+                        />
+                      </q-avatar>
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label class="ellipsis">{{
+                        authStore.currentAccount?.fullName
+                      }}</q-item-label>
+                      <q-item-label caption class="ellipsis">{{
+                        authStore.currentAccount?.email
+                      }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <q-separator />
+                  <q-item clickable v-close-popup @click="logout">
+                    <q-item-section>Logout</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-btn>
+          </div>
         </div>
       </q-toolbar>
     </q-header>
@@ -69,37 +113,37 @@ function openEnrollDialog() {
       v-model="drawer"
       show-if-above
       bordered
-      :mini="!drawer || miniState"
-      @click.capture="drawerClick()"
+      :width="256"
+      :breakpoint="500"
+      class="classroom-drawer"
     >
-      <q-scroll-area class="fit" :horizontal-thumb-style="{ opacity: '0' }">
-        <q-card style="padding-top: 1rem">
-          <q-card-section>
-            <div class="flex items-center gap-2">
-              <q-icon size="2rem" class="self-center">
-                <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
-              </q-icon>
-              <div v-if="!miniState" style="font-size: 1.4rem; margin-left: 0.5rem">
-                <strong>Q-Class Attendance</strong>
-              </div>
-            </div>
-          </q-card-section>
-        </q-card>
+      <div class="drawer-content">
+        <div class="drawer-header q-px-md q-py-sm">
+          <div class="row items-center no-wrap">
+            <q-icon size="28px" class="q-mr-sm">
+              <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
+            </q-icon>
+            <div class="text-subtitle1 text-weight-bold">Q-Class Attendance</div>
+          </div>
+        </div>
 
-        <q-list padding>
-          <EssentialLink v-for="link in linksList" :key="link.title" v-bind="link" />
-        </q-list>
-      </q-scroll-area>
+        <q-scroll-area class="drawer-scroll-area">
+          <q-list padding class="classroom-nav-list">
+            <EssentialLink v-for="link in linksList" :key="link.title" v-bind="link" />
 
-      <div class="q-mini-drawer-hide absolute" style="top: 1.7rem; right: -17px">
-        <q-btn
-          dense
-          round
-          unelevated
-          color="accent"
-          icon="chevron_left"
-          @click="miniState = true"
-        />
+            <q-separator class="q-my-md" />
+
+            <q-item-label header class="text-weight-bold q-pb-xs">Enrolled</q-item-label>
+            <EssentialLink
+              v-for="theClass in classStore.enrolled"
+              :key="theClass.key"
+              :title="theClass.name"
+              :caption="theClass.section"
+              :icon="'class'"
+              :link="`/student/class/${theClass.key}`"
+            />
+          </q-list>
+        </q-scroll-area>
       </div>
     </q-drawer>
 
@@ -108,3 +152,128 @@ function openEnrollDialog() {
     </q-page-container>
   </q-layout>
 </template>
+
+<style scoped>
+.header-container {
+  margin: 1rem;
+  border-radius: 10px;
+
+  @media (max-width: 599px) {
+    margin: 0.5rem;
+  }
+}
+
+.classroom-toolbar {
+  height: 64px;
+  padding: 0 16px;
+  border-bottom: 1px solid #e0e0e0;
+
+  @media (max-width: 599px) {
+    height: 56px;
+    padding: 0 8px;
+  }
+}
+
+.header-left {
+  flex-shrink: 0;
+  max-width: 60%;
+
+  .app-logo {
+    @media (max-width: 350px) {
+      display: none;
+    }
+  }
+}
+
+.username-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 1.1rem;
+
+  @media (max-width: 599px) {
+    font-size: 1.1rem;
+    max-width: 150px;
+  }
+
+  .greeting {
+    @media (max-width: 350px) {
+      display: none;
+    }
+  }
+
+  .name {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+  }
+}
+
+.header-actions {
+  gap: 8px;
+
+  @media (max-width: 599px) {
+    gap: 4px;
+  }
+
+  .action-btn {
+    @media (max-width: 599px) {
+      padding: 4px;
+    }
+  }
+
+  .avatar-btn {
+    @media (max-width: 599px) {
+      padding: 4px;
+    }
+  }
+}
+
+.user-info {
+  max-width: 200px;
+
+  .q-item-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.classroom-drawer {
+  background-color: white;
+}
+
+.drawer-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.drawer-header {
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.drawer-scroll-area {
+  flex-grow: 1;
+  height: calc(100% - 56px);
+}
+
+.classroom-nav-list .q-item {
+  border-radius: 0 24px 24px 0;
+  margin-right: 12px;
+  padding: 8px 12px;
+  min-height: 48px;
+  font-weight: 500;
+}
+
+.classroom-nav-list .q-item.active-button {
+  background-color: #e6f4ea;
+  color: #1a73e8;
+}
+
+.classroom-nav-list .q-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+</style>

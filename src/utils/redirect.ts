@@ -8,16 +8,14 @@ export function useLogout() {
   const authStore = useAuthStore();
 
   const logout = () => {
-    $q.notify({
-      message: 'Are you sure',
-      actions: [
-        {
-          label: 'Yes', handler() {
-            void authStore.logout();
-            void router.push('/');
-          },
-        }, { label: 'Maybe' }
-      ]
+    $q.dialog({
+      title: 'Confirm Logout',
+      message: 'Are you sure you want to logout?',
+      cancel: true,
+      persistent: true,
+    }).onOk(() => {
+      void authStore.logout();
+      void router.push('/');
     });
   };
 
