@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { copyToClipboard, date, Notify, uid } from 'quasar';
+import { copyToClipboard, date, Notify, uid, useQuasar } from 'quasar';
 import { useClassStore } from 'src/stores/class-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
@@ -9,6 +9,7 @@ import { useRouter } from 'vue-router';
 const classStore = useClassStore();
 const authStore = useAuthStore();
 const router = useRouter();
+const $q = useQuasar();
 
 const showNewClassDialog = ref(false);
 const className = ref('');
@@ -107,6 +108,35 @@ function copyInviteLink(cls: ClassModel): void {
     });
 }
 
+function deleteCourse(cls: ClassModel){
+  $q.dialog({
+    title: 'Delete Class',
+    message: 'Are you sure you want to delete this class?',
+    cancel: true,
+  }).onOk(()=>{
+    void classStore
+      .deleteClass(cls.key || '')
+      .then(()=>{
+        Notify.create({
+          message: 'Class deleted successfully',
+          color: 'green',
+          icon: 'check_circle',
+          position: 'top',
+          timeout: 3000,
+        });
+      })
+      .catch(()=>{
+        Notify.create({
+          message: 'Failed to delete course',
+          color: 'negative',
+          icon: 'error',
+          position: 'top',
+          timeout: 3000,
+        });
+      })
+
+  })
+}
 
 </script>
 
@@ -153,7 +183,7 @@ function copyInviteLink(cls: ClassModel): void {
                               <q-item-section>Copy invite link</q-item-section>
                             </q-item>
                           <q-separator/>
-                            <q-item >
+                            <q-item clickable v-close-popup @click="deleteCourse(theClass)">
                               <q-item-section avatar>
                                <q-icon name="delete" color="red"/>
                               </q-item-section>
