@@ -95,7 +95,7 @@ const gotoDashboard = () => {
           </div>
 
           <!-- Mobile Menu Button -->
-          <div class="mobile-only">
+          <div>
             <q-btn flat round icon="menu" @click="drawer = !drawer" />
           </div>
         </q-toolbar>
@@ -238,7 +238,7 @@ const gotoDashboard = () => {
 
 @media (max-width: 1023px) {
   .desktop-nav {
-    display: none;
+    display: none !important;
   }
 
   .centered-toolbar {

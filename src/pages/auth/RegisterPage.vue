@@ -234,7 +234,9 @@ function goToLogin() {
               outline
               no-caps
             >
-              <q-icon name="img:~assets/google-icon.svg" size="18px" class="q-mr-sm" />
+              <q-icon size="18px" class="q-mr-sm">
+                <q-img src="~assets/google-icon.svg" />
+              </q-icon>
               Google
             </q-btn>
 
