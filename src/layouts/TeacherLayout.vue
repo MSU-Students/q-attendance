@@ -51,7 +51,12 @@ function openCreateClassDialog() {
         <q-btn flat round dense icon="menu" @click="drawer = !drawer" />
 
         <q-toolbar-title class="ellipsis">
-          <span class="greeting">Hi,</span> {{ authStore.currentAccount?.fullName }}!
+          <span class="greeting">Hi,</span>
+          {{
+            authStore.currentAccount?.fullName
+              ? authStore.currentAccount?.fullName.split(' ')[0]
+              : ''
+          }}!
         </q-toolbar-title>
 
         <div class="action-buttons">

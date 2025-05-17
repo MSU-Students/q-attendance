@@ -193,7 +193,7 @@ function openEnrollDialog() {
 
   @media (max-width: 599px) {
     font-size: 1.1rem;
-    max-width: 120px;
+    max-width: 150px;
   }
 
   .greeting {
@@ -203,8 +203,7 @@ function openEnrollDialog() {
   }
 
   .name {
-    display: inline-block;
-    max-width: 150px;
+    max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
     vertical-align: bottom;
