@@ -277,12 +277,11 @@ function deleteCourse(cls: ClassModel){
 }
 
 .card {
-  width: 300px;
+  width: 290px;
   border-radius: 5%;
   background-color: white;
   box-shadow: 0 1px 6px rgba(0,0,0,0.3);
-  transition: transform 0.2s ease; 
-  margin: 2.5%;
+  transition: transform 0.2s ease;
 }
 
 .card:hover{
