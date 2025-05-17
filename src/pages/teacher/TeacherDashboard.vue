@@ -34,6 +34,13 @@ function addNewClass() {
 
 async function saveClass() {
   if (authStore.currentAccount) {
+    Notify.create({
+        message: 'You added a new class',
+        color: 'green',
+        icon: 'check',
+        position: 'top',
+        timeout: 2000,
+      });
     const newClass: ClassModel = {
       key: uid(),
       name: className.value,
