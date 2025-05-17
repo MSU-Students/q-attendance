@@ -43,7 +43,7 @@ const scrollToSection = (targetId: string) => {
 };
 
 const signinButton = () => {
-  void router.push('/auth/login');
+  void router.push({name:'login'});
 };
 
 const signupButton = () => {
