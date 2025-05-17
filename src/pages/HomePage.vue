@@ -209,7 +209,7 @@ const portalLinks = [
       <div class="container">
         <div class="row items-center">
           <div class="col-12 col-md-6 text-center text-md-left">
-            <h1 class="text-h2 text-weight-bold q-mb-md">Q-attdance System</h1>
+            <h1 class="text-h2 text-weight-bold q-mb-md">Q-attendance System</h1>
             <p class="text-body1 q-mb-lg">
               Centralize all your attendance tracking in a single, intuitive application with
               real-time updates and detailed analytics.

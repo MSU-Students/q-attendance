@@ -66,7 +66,7 @@ const gotoDashboard = () => {
               <q-avatar class="q-mr-sm" size="32px">
                 <img src="~assets/msulogo.png" />
               </q-avatar>
-              <q-toolbar-title class="text-primary text-weight-bold"> Q-attdance </q-toolbar-title>
+              <q-toolbar-title class="text-primary text-weight-bold"> Q-attendance </q-toolbar-title>
             </div>
           </div>
 
