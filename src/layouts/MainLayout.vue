@@ -47,7 +47,7 @@ const signinButton = () => {
 };
 
 const signupButton = () => {
-  void router.push('/auth/register');
+  void router.push({name:'register'});
 };
 
 const gotoDashboard = () => {
