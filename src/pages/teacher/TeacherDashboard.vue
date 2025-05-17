@@ -227,6 +227,9 @@ function deleteCourse(cls: ClassModel) {
             <q-icon name="school" size="4rem" color="grey-5" />
             <div class="text-h6 q-mt-md text-grey">No classes yet</div>
             <div class="text-caption q-mt-sm">Click the + button to create your first class</div>
+            <div class="q-mt-md">
+              <q-btn color="primary" label="Add new Class" @click="addNewClass" />
+            </div>
           </q-card-section>
         </q-card>
       </div>
