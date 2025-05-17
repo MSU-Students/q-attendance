@@ -358,7 +358,7 @@ const portalLinks = [
         <div class="text-center q-mb-xl">
           <h2 class="text-h3 text-weight-bold q-mb-md">Role-Based Features</h2>
           <p class="text-body1 q-mx-auto" style="max-width: 700px">
-            Q-attdance System is designed to cater to the needs of different roles for more
+            Q-attedance System is designed to cater to the needs of different roles for more
             effective and productive attendance management.
           </p>
         </div>
@@ -400,7 +400,7 @@ const portalLinks = [
           <h2 class="text-h3 text-weight-bold q-mb-md">What Our Users Say</h2>
           <p class="text-body1 q-mx-auto" style="max-width: 700px">
             Customers from top universities worldwide have transformed their attendance tracking
-            with Q-attdance.
+            with Q-attedance.
           </p>
         </div>
 
@@ -465,7 +465,7 @@ const portalLinks = [
             <h4 class="text-h6 text-weight-bold">Contact Us</h4>
             <p class="q-mb-xs">
               <q-icon name="email" size="xs" class="q-mr-sm" />
-              info@q-attdance.com
+              info@q-attedance.com
             </p>
             <p class="q-mb-xs">
               <q-icon name="phone" size="xs" class="q-mr-sm" />
@@ -497,7 +497,7 @@ const portalLinks = [
         <div class="row copyright-section q-mt-xl">
           <div class="col-12 text-center">
             <p class="text-caption q-mb-none">
-              © {{ new Date().getFullYear() }} Q-attdance System • All rights reserved
+              © {{ new Date().getFullYear() }} Q-attedance System • All rights reserved
             </p>
           </div>
         </div>
