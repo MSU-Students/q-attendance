@@ -51,7 +51,7 @@ const signupButton = () => {
 };
 
 const gotoDashboard = () => {
-  void router.push(`${authStore.currentAccount?.role}`);
+  void router.push({name:`${authStore.currentAccount?.role}`});
 };
 </script>
 
