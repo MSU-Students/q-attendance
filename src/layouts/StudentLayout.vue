@@ -45,12 +45,8 @@ function openEnrollDialog() {
           <div class="row items-center header-left">
             <q-btn flat round dense icon="menu" @click="drawer = !drawer" />
 
-            <q-avatar class="q-ml-sm app-logo" size="32px">
-              <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
-            </q-avatar>
-
-            <q-toolbar-title class="text-primary q-ml-sm username-title">
-              <span class="greeting">Hi,</span>
+            <q-toolbar-title class="q-ml-sm username-title">
+              <span class="greeting">Hi, </span>
               <span class="name">{{
                 authStore.currentAccount?.fullName
                   ? authStore.currentAccount?.fullName.split(' ')[0]
@@ -196,7 +192,7 @@ function openEnrollDialog() {
   font-size: 1.1rem;
 
   @media (max-width: 599px) {
-    font-size: 1rem;
+    font-size: 1.1rem;
     max-width: 120px;
   }
 
