@@ -236,32 +236,52 @@ function deleteCourse(cls: ClassModel) {
     </div>
 
     <q-dialog v-model="showNewClassDialog" persistent>
-      <q-card style="min-width: 500px">
-        <q-card-section>
-          <div class="text-h6">New Class</div>
+      <q-card style="min-width: 450px">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6">Create class</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
         <q-card-section>
+          <p class="text-caption q-mb-md">
+            You're creating a class. After you enter the class name and section, you can add
+            students.
+          </p>
           <q-input
-            outlined
             v-model="className"
-            label="Class Name"
+            label="Class name"
+            outlined
+            class="q-mb-md"
             :rules="[
               (v) => !!v || 'Class name is required',
               (v) => v.length >= 3 || 'Name must be at least 3 characters',
             ]"
           />
           <q-input
-            outlined
             v-model="classSection"
-            label="Class Section"
+            label="Section"
+            outlined
+            class="q-mb-md"
             :rules="[(v) => !!v || 'Class section is required']"
           />
+          <div class="text-caption q-mb-md">
+            The class code will be automatically generated:
+            <span class="text-weight-bold">{{
+              Math.random().toString(36).substring(2, 6).toUpperCase()
+            }}</span>
+          </div>
         </q-card-section>
 
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" color="negative" v-close-popup />
-          <q-btn flat label="Create" color="positive" @click="saveClass" :disable="!className" />
+        <q-card-actions align="right" class="q-pa-md">
+          <q-btn flat label="Cancel" color="grey-7" v-close-popup />
+          <q-btn
+            unelevated
+            label="Create"
+            color="primary"
+            @click="saveClass"
+            :disable="!className || !classSection"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
