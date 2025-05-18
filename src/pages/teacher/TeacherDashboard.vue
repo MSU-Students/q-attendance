@@ -236,15 +236,15 @@ function deleteCourse(cls: ClassModel) {
     </div>
 
     <q-dialog v-model="showNewClassDialog" persistent>
-      <q-card style="min-width: 450px">
+      <q-card class="create-dialog">
         <q-card-section class="row items-center q-pb-none">
-          <div class="text-h6">Create class</div>
+          <div class="dialog-title">Create class</div>
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
         <q-card-section>
-          <p class="text-caption q-mb-md">
+          <p class="dialog-description q-mb-md">
             You're creating a class. After you enter the class name and section, you can add
             students.
           </p>
@@ -252,7 +252,7 @@ function deleteCourse(cls: ClassModel) {
             v-model="className"
             label="Class name"
             outlined
-            class="q-mb-md"
+            class="q-mb-md dialog-input"
             :rules="[
               (v) => !!v || 'Class name is required',
               (v) => v.length >= 3 || 'Name must be at least 3 characters',
@@ -262,25 +262,26 @@ function deleteCourse(cls: ClassModel) {
             v-model="classSection"
             label="Section"
             outlined
-            class="q-mb-md"
+            class="q-mb-md dialog-input"
             :rules="[(v) => !!v || 'Class section is required']"
           />
-          <div class="text-caption q-mb-md">
-            The class code will be automatically generated:
+          <div class="class-code-section q-mb-md">
+            <span class="text-caption">The class code will be automatically generated:</span>
             <span class="text-weight-bold">{{
               Math.random().toString(36).substring(2, 6).toUpperCase()
             }}</span>
           </div>
         </q-card-section>
 
-        <q-card-actions align="right" class="q-pa-md">
-          <q-btn flat label="Cancel" color="grey-7" v-close-popup />
+        <q-card-actions align="right" class="q-pa-md dialog-actions">
+          <q-btn flat label="Cancel" color="grey-7" v-close-popup class="dialog-btn" />
           <q-btn
             unelevated
             label="Create"
             color="primary"
             @click="saveClass"
             :disable="!className || !classSection"
+            class="dialog-btn"
           />
         </q-card-actions>
       </q-card>
@@ -368,5 +369,70 @@ function deleteCourse(cls: ClassModel) {
 
 .text-h6 {
   text-align: center;
+}
+
+.create-dialog {
+  width: 90vw;
+  max-width: 500px;
+  margin: 20px;
+
+  @media (max-width: 599px) {
+    width: 95vw;
+    margin: 10px;
+  }
+}
+
+.dialog-title {
+  font-size: 1.5rem;
+  font-weight: 500;
+
+  @media (max-width: 599px) {
+    font-size: 1.25rem;
+  }
+}
+
+.dialog-description {
+  font-size: 0.875rem;
+  line-height: 1.4;
+
+  @media (max-width: 599px) {
+    font-size: 0.8rem;
+  }
+}
+
+.dialog-input {
+  .q-field__label {
+    font-size: 1rem;
+
+    @media (max-width: 599px) {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+.class-code-section {
+  background: rgba(0, 0, 0, 0.03);
+  padding: 12px;
+  border-radius: 8px;
+
+  @media (max-width: 599px) {
+    padding: 8px;
+    font-size: 0.875rem;
+  }
+}
+
+.dialog-actions {
+  @media (max-width: 599px) {
+    padding: 8px !important;
+  }
+}
+
+.dialog-btn {
+  min-width: 85px;
+
+  @media (max-width: 599px) {
+    min-width: 70px;
+    font-size: 0.875rem;
+  }
 }
 </style>

@@ -287,25 +287,23 @@ async function unenrollCourse(cls: ClassModel) {
           </q-card-section>
         </q-card>
       </div>
-    </div>
-
-    <q-dialog v-model="showEnrollDialog" persistent>
-      <q-card style="min-width: 450px">
+    </div>    <q-dialog v-model="showEnrollDialog" persistent>
+      <q-card class="enroll-dialog">
         <q-card-section class="row items-center q-pb-none">
-          <div class="text-h6">Join class</div>
+          <div class="dialog-title">Join class</div>
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
         <q-card-section>
-          <p class="text-caption q-mb-md">
+          <p class="dialog-description q-mb-md">
             Ask your teacher for the class code, then enter it here.
           </p>
           <q-input
             v-model="classCode"
             label="Class code"
             outlined
-            class="q-mb-md"
+            class="q-mb-md dialog-input"
             :error="!!codeError"
             :error-message="codeError"
             :rules="[
@@ -314,14 +312,14 @@ async function unenrollCourse(cls: ClassModel) {
             ]"
             @keyup.enter="enrollInClass"
           />
-          <div class="text-caption q-mt-sm text-grey-8">
+          <div class="info-section q-mt-sm text-grey-8">
             <q-icon name="info" size="xs" class="q-mr-xs" />
             Class codes contain 4-7 letters or numbers with no spaces or symbols
           </div>
         </q-card-section>
 
-        <q-card-actions align="right" class="q-pa-md">
-          <q-btn flat label="Cancel" color="grey-7" v-close-popup />
+        <q-card-actions align="right" class="q-pa-md dialog-actions">
+          <q-btn flat label="Cancel" color="grey-7" v-close-popup class="dialog-btn" />
           <q-btn
             unelevated
             label="Join"
@@ -329,6 +327,7 @@ async function unenrollCourse(cls: ClassModel) {
             @click="enrollInClass"
             :loading="isLoading"
             :disable="!classCode"
+            class="dialog-btn"
           />
         </q-card-actions>
       </q-card>
@@ -375,5 +374,77 @@ async function unenrollCourse(cls: ClassModel) {
 
 .add-class-btn:hover {
   box-shadow: 0 4px 12px 0 rgba(60, 64, 67, 0.4);
+}
+
+.enroll-dialog {
+  width: 90vw;
+  max-width: 500px;
+  margin: 20px;
+
+  @media (max-width: 599px) {
+    width: 95vw;
+    margin: 10px;
+  }
+
+  .dialog-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+
+    @media (max-width: 599px) {
+      font-size: 1.25rem;
+    }
+  }
+
+  .dialog-description {
+    font-size: 0.875rem;
+    line-height: 1.4;
+
+    @media (max-width: 599px) {
+      font-size: 0.8rem;
+    }
+  }
+
+  .dialog-input {
+    .q-field__label {
+      font-size: 1rem;
+
+      @media (max-width: 599px) {
+        font-size: 0.875rem;
+      }
+    }
+  }
+
+  .info-section {
+    font-size: 0.875rem;
+    background: rgba(0, 0, 0, 0.03);
+    padding: 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: flex-start;
+
+    @media (max-width: 599px) {
+      font-size: 0.8rem;
+      padding: 6px;
+    }
+
+    .q-icon {
+      margin-top: 2px;
+    }
+  }
+
+  .dialog-actions {
+    @media (max-width: 599px) {
+      padding: 8px !important;
+    }
+
+    .dialog-btn {
+      min-width: 80px;
+
+      @media (max-width: 599px) {
+        min-width: 70px;
+        font-size: 0.875rem;
+      }
+    }
+  }
 }
 </style>
