@@ -53,8 +53,7 @@ export default defineRouter(function (/* { store, ssrContext } */) {
     if (to.meta?.anonymous && user) {
       showNotif();
       next({ name: 'home' });
-    }
-    if (to.meta?.admin && user?.role !== 'admin') {
+    } if (to.meta?.admin && user?.role !== 'admin') {
       showNotif();
       next({ name: 'home' });
     } else if (to.meta?.supervisor && user?.role !== 'supervisor' && to.name != 'home') {
