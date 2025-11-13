@@ -48,6 +48,7 @@ export const useAttendanceStore = defineStore('attendance', {
 
     streamClassMeetings(classKey: string, options: {
       student?: string | undefined
+      loadAllCheckIns?: boolean
       onSnapshot: (meetings: ClassMeetingModel[]) => void | Promise<void>
     }) {
       return firebaseService.streamRecords('meetings', {
@@ -60,6 +61,10 @@ export const useAttendanceStore = defineStore('attendance', {
               m.checkIns = await firebaseService.findRecords('check-ins', `/meetings/${m.key}`, {
                 key: { '==': options.student }
               });
+            } else if (options.loadAllCheckIns) {
+              // Load ALL check-ins for analysis
+              m.checkIns = await firebaseService.findRecords('check-ins', `/meetings/${m.key}`);
+              m.checkInCount = m.checkIns?.length || 0;
             } else {
               m.checkInCount = await firebaseService.countRecords('check-ins', `/meetings/${m.key}`)
             }

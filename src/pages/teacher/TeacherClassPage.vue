@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router';
 import { ClassModel } from 'src/models/class.models';
 import ClassMeetingListingTabPanel from './tabs/ClassMeetingListingTabPanel.vue';
 import EnrolledStudentsTabPanel from './tabs/EnrolledStudentsTabPanel.vue';
+import AnalysisTabPanel from './tabs/AnalysisTabPanel.vue';
 
 const route = useRoute();
 const classStore = useClassStore();
@@ -51,6 +52,7 @@ onMounted(async () => {
     >
       <q-tab name="attendance" label="Attendance History" icon="history" />
       <q-tab name="students" label="Students" icon="people" />
+      <q-tab name="analysis" label="Analysis" icon="analytics" />
     </q-tabs>
 
     <q-separator />
@@ -58,6 +60,7 @@ onMounted(async () => {
     <q-tab-panels v-model="tab" v-if="activeClass" animated>
       <EnrolledStudentsTabPanel :current-class="activeClass" name="students" />
       <ClassMeetingListingTabPanel :cls="activeClass" name="attendance" />
+      <AnalysisTabPanel :cls="activeClass" name="analysis" />
     </q-tab-panels>
   </q-page>
 </template>
