@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { Notify } from 'quasar';
 import type { UserModel } from 'src/models/user.models';
 import { firebaseService } from 'src/services/firebase-service';
+import { usePersistentStore } from './persistent-store';
 interface IState {
   currentAccount?: UserModel | undefined
 }
@@ -16,16 +17,16 @@ export const useAuthStore = defineStore('auth', {
       return this.authorizeUser();
     },
     async loginWithGoogle() {
+      const persistentStore = usePersistentStore();
       await firebaseService.signInWithGoogle();
       const user = await firebaseService.authorizeUser();
       if (user) {
         const userKey = user.uid;
-        const userData = await firebaseService.getRecord('users', userKey);
+        const userData = await persistentStore.getRecord('users', userKey);
 
         if (userData) {
           return false;
         }
-
         return true;
       }
       return false;
@@ -37,6 +38,8 @@ export const useAuthStore = defineStore('auth', {
     async authorizeUser(displayName: string = '', role: string = '') {
       const user = await firebaseService.authorizeUser();
       if (user) {
+        const persistentStore = usePersistentStore();
+        persistentStore.updateOnlineState(true);
         this.currentAccount = {
           key: user.uid,
           avatar: user.photoURL || '',
@@ -45,22 +48,22 @@ export const useAuthStore = defineStore('auth', {
           fullName: user.displayName || displayName,
           role: role as UserModel['role'],
           status: 'active',
-
         }
         const userKey = this.currentAccount.key || '';
-        const userData = await firebaseService.getRecord('users', userKey);
+        const userData = await persistentStore.getRecord('users', userKey);
         this.currentAccount = {
           ...this.currentAccount,
           ...userData
         }
-        await firebaseService.updateRecord('users', this.currentAccount.key || '', this.currentAccount);
+        await persistentStore.updateRecord('users', this.currentAccount.key || '', this.currentAccount);
         return this.currentAccount;
       } else {
         this.currentAccount = undefined;
       }
     },
     async updateRole(role: 'student' | 'teacher' | 'supervisor' | 'admin', key: string) {
-      await firebaseService.updateRecord('users', key, { role })
+      const persistentStore = usePersistentStore();
+      await persistentStore.updateRecord('users', key, { role })
         .then(() => {
           Notify.create({
             message: 'Role updated',
@@ -73,7 +76,8 @@ export const useAuthStore = defineStore('auth', {
         })
     },
     async updateStatus(status: 'active' | 'inactive' | 'pending', key: string) {
-      await firebaseService.updateRecord('users', key, { status })
+      const persistentStore = usePersistentStore();
+      await persistentStore.updateRecord('users', key, { status })
         .then(() => {
           Notify.create({
             message: `Status updated to ${status}`,

@@ -1,7 +1,4 @@
 import Dexie, { EntityTable } from 'dexie';
-import { ClassMeetingModel } from 'src/models/attendance.models';
-import { ClassKeepingModel, ClassModel } from 'src/models/class.models';
-import { UserModel } from 'src/models/user.models';
 import { CollectionName, CollectionTypes } from './collection.type';
 
 const DB_NAME = "attendance-db";

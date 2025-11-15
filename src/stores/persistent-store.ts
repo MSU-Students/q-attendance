@@ -48,6 +48,14 @@ export const usePersistentStore = defineStore('persistent', {
                 });
               }
             });
+          table.filter((obj => !!obj.deleted_offline))
+            .each(async (record) => {
+              const path = record.path as string;
+              await firebaseService.deleteRecord(table.name as keyof CollectionTypes, record.key, path);
+
+              await localDb.table(table.name).delete(record.path ? [record.path, record.key] : record.key);
+
+            });
         })
       }
     },
@@ -80,7 +88,7 @@ export const usePersistentStore = defineStore('persistent', {
             ...oldRecord,
             ...record,
             path,
-            created_online: new Date()
+            created_online: oldRecord.created_online || new Date()
           };
           await localDb.table(collectionName).update(path ? [path, key] : key, item);
         } else {
@@ -135,13 +143,13 @@ export const usePersistentStore = defineStore('persistent', {
         const item = {
           ...oldRecord,
           path,
-          deleted_online: false
+          deleted_offline: new Date()
         };
         await localDb.table(collectionName).update(path ? [path, key] : key, item);
       }
       return true;
     },
-    async findRecords<C extends CollectionName>(collectionName: C, path?: string, condition?: Record<string, string>): Promise<CollectionTypes[C][]> {
+    async findRecords<C extends CollectionName>(collectionName: C, path?: string, condition?: Record<string, any>): Promise<CollectionTypes[C][]> {
       if (this.online) {
 
         const results = await (condition ? firebaseService.findRecords(collectionName, path, condition as Condition<CollectionTypes[C]>)
@@ -164,7 +172,7 @@ export const usePersistentStore = defineStore('persistent', {
       } else {
         const table = localDb.table(collectionName);
         const query = condition ? table.where(condition) : table;
-        return await query.toArray();
+        return (await query.toArray()).filter(d => !d.deleted_offline);
       }
     },
     async countRecords<C extends CollectionName>(collectionName: C, path?: string, condition?: Record<string, string>): Promise<number> {
