@@ -152,10 +152,25 @@ function deleteCourse(cls: ClassModel) {
       });
   });
 }
+
+function createAttendance() {
+  void router.push({ name: 'createAttendance' });
+}
 </script>
 
 <template>
   <q-page class="q-pa-md allCards">
+    <div class="row items-center justify-between q-mb-lg">
+      <div class="text-h5 text-weight-bold">My Classes</div>
+      <q-btn
+        color="primary"
+        icon="assignment"
+        label="Create Attendance"
+        @click="createAttendance"
+        unelevated
+      />
+    </div>
+
     <div class="row q-col-gutter-md">
       <div
         class="boxes"

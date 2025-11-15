@@ -18,6 +18,28 @@ export const useUsersStore = defineStore('users', {
     async loadUsers() {
       const users = await firebaseService.findRecords('users');
       this.users = users;
+    },
+    async importUsers(users: UserModel[], onProgress?: (done: number, total: number) => void) {
+      const errors: { user: UserModel; error: string }[] = [];
+      let done = 0;
+      for (const u of users) {
+        try {
+          await firebaseService.createRecord('users', u);
+        } catch (e) {
+          const errMsg = e instanceof Error ? e.message : String(e);
+          errors.push({ user: u, error: errMsg });
+          console.error('failed to import user', u, e);
+        } finally {
+          done++;
+          onProgress?.(done, users.length);
+        }
+      }
+      await this.loadUsers();
+      return {
+        success: users.length - errors.length,
+        failed: errors.length,
+        errors,
+      } as const;
     }
   },
 });
