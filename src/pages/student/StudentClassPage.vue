@@ -24,7 +24,7 @@ const activeClass = computed(() => {
 });
 const currentClass = ref<ClassModel>();
 const currentStudent = computed(() => {
-  return authStore.currentAccount;
+  return authStore.currentAccounts.find((a) => a.role == 'student');
 });
 
 onMounted(async () => {

@@ -8,7 +8,7 @@ const props = defineProps<{
 }>();
 const authStore = useAuthStore();
 const currentStudent = computed(() => {
-  return authStore.currentAccount;
+  return authStore.studentAccount;
 });
 const classMeetingHistory = computed(() => {
   return props.meetings.reduce((all, meeting) => {

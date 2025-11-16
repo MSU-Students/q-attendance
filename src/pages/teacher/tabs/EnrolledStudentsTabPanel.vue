@@ -37,6 +37,7 @@ async function saveStudent() {
       class: activeClass.value,
       student: {
         key: uid(),
+        ownerKey: '',
         email: studentEmail.value,
         fullName: studentName.value,
       },

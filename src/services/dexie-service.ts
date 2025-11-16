@@ -9,7 +9,7 @@ export const localDb = new Dexie(DB_NAME) as Dexie & DexieCollectionsType;
 
 // Declare tables, IDs and indexes
 localDb.version(1).stores({
-  users: 'key',
+  users: 'key,ownerKey',
   classes: 'key',
   'teachers': '[path+key]',
   'enrolled': '[path+key]',

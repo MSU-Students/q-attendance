@@ -149,7 +149,7 @@ export const usePersistentStore = defineStore('persistent', {
       }
       return true;
     },
-    async findRecords<C extends CollectionName>(collectionName: C, path?: string, condition?: Record<string, any>): Promise<CollectionTypes[C][]> {
+    async findRecords<C extends CollectionName>(collectionName: C, path?: string, condition?: Partial<Record<keyof CollectionTypes[C], any>>): Promise<CollectionTypes[C][]> {
       if (this.online) {
 
         const results = await (condition ? firebaseService.findRecords(collectionName, path, condition as Condition<CollectionTypes[C]>)

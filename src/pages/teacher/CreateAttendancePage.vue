@@ -30,7 +30,7 @@ const activeClass = computed(() => {
 const currentClass = ref<ClassModel>();
 
 const currentTeacher = computed(() => {
-  return authStore.currentAccount;
+  return authStore.teacherAccount;
 });
 
 const formattedDateTime = computed(() => {

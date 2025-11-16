@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
+import { UserModel } from 'src/models/user.models';
 
 const router = useRouter();
 const route = useRoute();
@@ -12,7 +13,7 @@ const navLinks = [
   { label: 'Home', target: 'home' },
   { label: 'Features', target: 'features' },
   { label: 'About', target: 'about' },
-  { label: 'Contact', target: 'contact' }
+  { label: 'Contact', target: 'contact' },
 ];
 
 // Function to scroll to section
@@ -40,15 +41,15 @@ const scrollToSection = (targetId: string) => {
 };
 
 const signinButton = () => {
-  void router.push({name:'login'});
+  void router.push({ name: 'login' });
 };
 
 const signupButton = () => {
-  void router.push({name:'register'});
+  void router.push({ name: 'register' });
 };
 
-const gotoDashboard = () => {
-  void router.push({name:`${authStore.currentAccount?.role}`});
+const gotoDashboard = (role: UserModel['role']) => {
+  void router.push({ name: role });
 };
 </script>
 
@@ -63,7 +64,9 @@ const gotoDashboard = () => {
               <q-avatar class="q-mr-sm" size="32px">
                 <img src="~assets/msulogo.png" />
               </q-avatar>
-              <q-toolbar-title class="text-primary text-weight-bold"> Q-attendance </q-toolbar-title>
+              <q-toolbar-title class="text-primary text-weight-bold">
+                Q-attendance
+              </q-toolbar-title>
             </div>
           </div>
 
@@ -80,8 +83,35 @@ const gotoDashboard = () => {
 
           <!-- Auth Buttons (Right) -->
           <div class="auth-section desktop-nav">
-            <div v-if="authStore.currentAccount">
-              <q-btn unelevated color="primary" no-caps @click="gotoDashboard"> Dashboard </q-btn>
+            <div v-if="authStore.currentAccounts">
+              <q-btn
+                v-if="authStore.currentAccounts.length == 0"
+                unelevated
+                color="primary"
+                no-caps
+                :to="{ name: 'apply-for-role' }"
+                >Apply for Role</q-btn
+              >
+              <q-btn-dropdown v-else color="primary" label="Dashboard">
+                <q-list>
+                  <q-item
+                    v-for="account in authStore.currentAccounts"
+                    :key="account.key"
+                    clickable
+                    v-close-popup
+                    @click="gotoDashboard(account.role)"
+                  >
+                    <q-item-section>
+                      <q-item-label class="text-capitalize">{{ account.role }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <q-item :to="{ name: 'apply-for-role' }">
+                    <q-item-section>
+                      <q-item-label>Apply for Role</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-btn-dropdown>
             </div>
             <div v-else>
               <q-btn outline color="primary" no-caps class="q-mr-sm" @click="signinButton">
@@ -116,7 +146,12 @@ const gotoDashboard = () => {
 
         <q-separator spaced />
 
-        <q-item v-if="authStore.currentAccount" clickable v-ripple @click="gotoDashboard">
+        <q-item
+          v-if="authStore.currentAccounts.length"
+          clickable
+          v-ripple
+          @click="gotoDashboard(authStore.currentAccounts[0]?.role)"
+        >
           <q-item-section>Dashboard</q-item-section>
         </q-item>
         <template v-else>

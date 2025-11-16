@@ -4,7 +4,8 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   onAuthStateChanged, sendPasswordResetEmail,
-  signInWithEmailAndPassword, signInWithPopup, signOut, User
+  signInWithEmailAndPassword, signInWithPopup, signOut, User,
+  updateProfile
 } from "firebase/auth";
 import { getAuth } from "firebase/auth";
 import {
@@ -66,8 +67,11 @@ class FirebaseService {
    * @param email
    * @param password
    */
-  async registerWithEmailPassword(email: string, password: string) {
+  async registerWithEmailPassword(email: string, password: string, displayName: string) {
     const credential = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(credential.user, {
+      displayName
+    })
     return credential.user;
   }
   /**
