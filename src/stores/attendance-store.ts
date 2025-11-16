@@ -1,6 +1,7 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import { date } from 'quasar';
 import type { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
+import { usePersistentStore } from './persistent-store';
 import { firebaseService } from 'src/services/firebase-service';
 
 export const useAttendanceStore = defineStore('attendance', {
@@ -13,7 +14,8 @@ export const useAttendanceStore = defineStore('attendance', {
   },
   actions: {
     async newClassMeeting(payload: ClassMeetingModel) {
-      const record = await firebaseService.createRecord('meetings', {
+      const persistentStore = usePersistentStore();
+      const record = await persistentStore.createRecord('meetings', {
         ...payload,
         checkIns: undefined
       });
@@ -23,18 +25,19 @@ export const useAttendanceStore = defineStore('attendance', {
     },
     async loadClassMeetings(classKey: string, condition?: { student?: string | undefined }) {
       try {
-        const records = await firebaseService.findRecords('meetings', undefined, {
+        const persistentStore = usePersistentStore();
+        const records = await persistentStore.findRecords('meetings', undefined, {
           classKey: { '==': classKey }
         });
         const classMeetings = await Promise.all(records.map(async m => {
           m.checkIns = [];
           m.checkInCount = 0;
           if (condition?.student) {
-            m.checkIns = await firebaseService.findRecords('check-ins', `/meetings/${m.key}`, {
+            m.checkIns = await persistentStore.findRecords('check-ins', `/meetings/${m.key}`, {
               key: { '==': condition.student }
             })
           } else {
-            m.checkInCount = await firebaseService.countRecords('check-ins', `/meetings/${m.key}`)
+            m.checkInCount = await persistentStore.countRecords('check-ins', `/meetings/${m.key}`)
           }
           return m;
         }));
@@ -51,6 +54,7 @@ export const useAttendanceStore = defineStore('attendance', {
       loadAllCheckIns?: boolean
       onSnapshot: (meetings: ClassMeetingModel[]) => void | Promise<void>
     }) {
+      const persistentStore = usePersistentStore();
       return firebaseService.streamRecords('meetings', {
         condition: { classKey: { '==': classKey } },
         async onSnapshot(records) {
@@ -58,15 +62,15 @@ export const useAttendanceStore = defineStore('attendance', {
             m.checkIns = [];
             m.checkInCount = 0;
             if (options.student) {
-              m.checkIns = await firebaseService.findRecords('check-ins', `/meetings/${m.key}`, {
+              m.checkIns = await persistentStore.findRecords('check-ins', `/meetings/${m.key}`, {
                 key: { '==': options.student }
               });
             } else if (options.loadAllCheckIns) {
               // Load ALL check-ins for analysis
-              m.checkIns = await firebaseService.findRecords('check-ins', `/meetings/${m.key}`);
+              m.checkIns = await persistentStore.findRecords('check-ins', `/meetings/${m.key}`);
               m.checkInCount = m.checkIns?.length || 0;
             } else {
-              m.checkInCount = await firebaseService.countRecords('check-ins', `/meetings/${m.key}`)
+              m.checkInCount = await persistentStore.countRecords('check-ins', `/meetings/${m.key}`)
             }
             return m;
           }));
@@ -98,6 +102,7 @@ export const useAttendanceStore = defineStore('attendance', {
       status: MeetingCheckInModel['status']
     }) {
       try {
+        const persistentStore = usePersistentStore();
         const checkInTime = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
         const checkInRecord: MeetingCheckInModel = {
           key: payload.student,
@@ -105,11 +110,11 @@ export const useAttendanceStore = defineStore('attendance', {
           status: payload.status || 'check-in',
         };
         await Promise.all([
-          firebaseService.createRecord('check-ins',
+          persistentStore.createRecord('check-ins',
             checkInRecord,
             `/meetings/${payload.meeting.key}`
           ),
-          firebaseService.updateRecord('meetings', payload.meeting.key, {
+          persistentStore.updateRecord('meetings', payload.meeting.key, {
             latestCheckIn: checkInTime
           })
         ]);
@@ -122,9 +127,10 @@ export const useAttendanceStore = defineStore('attendance', {
     },
 
     async loadMeeting(meetingKey: string) {
+      const persistentStore = usePersistentStore();
       const [record, checkIns] = await Promise.all([
-        firebaseService.getRecord('meetings', meetingKey),
-        firebaseService.findRecords('check-ins', `/meetings/${meetingKey}`)
+        persistentStore.getRecord('meetings', meetingKey),
+        persistentStore.findRecords('check-ins', `/meetings/${meetingKey}`)
       ]);
       if (record) {
         record.checkIns = checkIns || [];
@@ -138,12 +144,13 @@ export const useAttendanceStore = defineStore('attendance', {
       student: string;
       status: MeetingCheckInModel['status'];
     }) {
+      const persistentStore = usePersistentStore();
       try {
         const path = `/meetings/${payload.meetingKey}`
-        const existingRecord = await firebaseService.getRecord('check-ins', payload.student, path);
+        const existingRecord = await persistentStore.getRecord('check-ins', payload.student, path);
         const marked = existingRecord?.status == 'check-in' || payload.status != 'check-in';
         const now = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
-        await firebaseService.updateRecord('check-ins', payload.student, {
+        await persistentStore.updateRecord('check-ins', payload.student, {
           status: payload.status,
           checkInTime: existingRecord?.checkInTime || now,
           markedInTime: marked ? now : ''
@@ -156,12 +163,13 @@ export const useAttendanceStore = defineStore('attendance', {
     },
     async latestCallMeeting(meetingKey: string) {
       try {
-        const existingMeeting = await firebaseService.getRecord('meetings', meetingKey);
+        const persistentStore = usePersistentStore();
+        const existingMeeting = await persistentStore.getRecord('meetings', meetingKey);
         if (!existingMeeting) {
           throw new Error('Meeting not found');
         }
         const now = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
-        await firebaseService.updateRecord('meetings', meetingKey, {
+        await persistentStore.updateRecord('meetings', meetingKey, {
           latestCall: now
         });
 
@@ -173,12 +181,13 @@ export const useAttendanceStore = defineStore('attendance', {
     },
     async concludeMeeting(meetingKey: string) {
       try {
-        const existingMeeting = await firebaseService.getRecord('meetings', meetingKey);
+        const persistentStore = usePersistentStore();
+        const existingMeeting = await persistentStore.getRecord('meetings', meetingKey);
         if (!existingMeeting) {
           throw new Error('Meeting not found');
         }
         const now = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
-        await firebaseService.updateRecord('meetings', meetingKey, {
+        await persistentStore.updateRecord('meetings', meetingKey, {
           status: 'concluded',
           latestCall: now
         });
@@ -192,11 +201,12 @@ export const useAttendanceStore = defineStore('attendance', {
 
     async reopenMeeting(meetingKey: string) {
       try {
-        const existingMeeting = await firebaseService.getRecord('meetings', meetingKey);
+        const persistentStore = usePersistentStore();
+        const existingMeeting = await persistentStore.getRecord('meetings', meetingKey);
         if (!existingMeeting) {
           throw new Error('Meeting not found');
         }
-        await firebaseService.updateRecord('meetings', meetingKey, {
+        await persistentStore.updateRecord('meetings', meetingKey, {
           status: 'open'
         });
 

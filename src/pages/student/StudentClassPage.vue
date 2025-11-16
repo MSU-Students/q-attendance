@@ -24,7 +24,7 @@ const activeClass = computed(() => {
 });
 const currentClass = ref<ClassModel>();
 const currentStudent = computed(() => {
-  return authStore.currentAccounts.find((a) => a.role == 'student');
+  return authStore.studentAccount;
 });
 
 onMounted(async () => {
@@ -37,7 +37,7 @@ onMounted(async () => {
 function loadAttendanceSessions() {
   if (activeClass.value?.key) {
     const unsubscribe = attendanceStore.streamClassMeetings(activeClass.value.key, {
-      student: currentStudent.value?.key || '',
+      student: currentStudent.value?.ownerKey || '',
       onSnapshot(records) {
         meetings.value = [...records];
       },
@@ -51,7 +51,7 @@ const openMeetings = computed(() => {
     if (meeting.status !== 'open') return false;
     return !(
       meeting.checkIns &&
-      meeting.checkIns.some((checkIn) => checkIn.key === currentStudent.value?.key)
+      meeting.checkIns.some((checkIn) => checkIn.key === currentStudent.value?.ownerKey)
     );
   });
 });
@@ -59,7 +59,7 @@ const historyMeetings = computed(() => {
   return meetings.value.filter((meeting) => {
     return (
       meeting.checkIns &&
-      meeting.checkIns.some((checkIn) => checkIn.key === currentStudent.value?.key)
+      meeting.checkIns.some((checkIn) => checkIn.key === currentStudent.value?.ownerKey)
     );
   });
 });
@@ -90,7 +90,7 @@ const historyMeetings = computed(() => {
 
       <q-tab-panels v-model="tab" animated>
         <!-- Check-in Tab -->
-        <CheckInTabPanel name="check-in" :meetings="openMeetings" />
+        <CheckInTabPanel name="check-in" :meetings="openMeetings" @checked-in="tab = 'history'" />
         <!-- Attendance History Tab -->
         <ClassHistoryTabPanel name="history" :meetings="historyMeetings" />
       </q-tab-panels>

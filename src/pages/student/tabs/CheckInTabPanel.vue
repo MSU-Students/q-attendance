@@ -12,6 +12,7 @@ defineProps<{
   name: string;
   meetings: ClassMeetingModel[];
 }>();
+const emit = defineEmits(['checkedIn']);
 const currentStudent = computed(() => {
   return authStore.studentAccount;
 });
@@ -43,7 +44,7 @@ async function checkInToSession(meeting: ClassMeetingModel) {
   isCheckingIn.value = true;
   try {
     await attendanceStore.checkInAttendance({
-      student: currentStudent.value.key,
+      student: currentStudent.value.ownerKey,
       meeting: meeting,
       status: 'check-in',
     });
@@ -56,6 +57,7 @@ async function checkInToSession(meeting: ClassMeetingModel) {
       position: 'top',
       timeout: 5000,
     });
+    emit('checkedIn');
   } catch (error) {
     console.error('Error checking in:', error);
     Notify.create({

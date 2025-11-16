@@ -12,7 +12,7 @@ const currentStudent = computed(() => {
 });
 const classMeetingHistory = computed(() => {
   return props.meetings.reduce((all, meeting) => {
-    all.push(...(meeting.checkIns || []).filter((c) => c.key == currentStudent.value?.key));
+    all.push(...(meeting.checkIns || []).filter((c) => c.key == currentStudent.value?.ownerKey));
     return all;
   }, [] as MeetingCheckInModel[]);
 });
