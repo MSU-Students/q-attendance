@@ -16,7 +16,7 @@ const router = useRouter();
 
 onMounted(async () => {
   if (authStore.isUserTeacher) {
-    await classStore.loadUserClasses(authStore.teacherAccount!.key);
+    await classStore.loadUserClasses(authStore.teacherAccount!.ownerKey);
   }
 });
 
@@ -91,9 +91,11 @@ function openCreateClassDialog() {
         <q-card style="padding-top: 1rem">
           <q-card-section>
             <div class="flex items-center gap-2">
-              <q-icon size="2rem" class="self-center">
-                <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
-              </q-icon>
+              <q-btn dense flat :to="{ name: 'home' }">
+                <q-icon size="2rem" class="self-center">
+                  <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
+                </q-icon>
+              </q-btn>
               <div v-if="!miniState" style="font-size: 1.4rem; margin-left: 0.5rem">
                 <strong>Q-Class Attendance</strong>
               </div>

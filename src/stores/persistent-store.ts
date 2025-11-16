@@ -61,7 +61,7 @@ export const usePersistentStore = defineStore('persistent', {
     },
     async createRecord<C extends CollectionName>(collectionName: C, record: CollectionTypes[C], path?: string): Promise<CollectionTypes[C] | undefined> {
       if (this.online) {
-        await firebaseService.createRecord(collectionName, record);
+        await firebaseService.createRecord(collectionName, record, path);
         const item = {
           ...record,
           created_online: new Date(),
@@ -82,6 +82,9 @@ export const usePersistentStore = defineStore('persistent', {
     async getRecord<C extends CollectionName>(collectionName: C, key: string, path?: string): Promise<CollectionTypes[C] | undefined> {
       if (this.online) {
         const record = await firebaseService.getRecord(collectionName, key) as CollectionTypes[C];
+        if (!record) {
+          return;
+        }
         const oldRecord = await localDb.table(collectionName).get(path ? [path, key] : key);
         if (oldRecord) {
           const item = {
@@ -91,6 +94,7 @@ export const usePersistentStore = defineStore('persistent', {
             created_online: oldRecord.created_online || new Date()
           };
           await localDb.table(collectionName).update(path ? [path, key] : key, item);
+          return item;
         } else {
           const item = {
             ...record,
@@ -149,10 +153,19 @@ export const usePersistentStore = defineStore('persistent', {
       }
       return true;
     },
+    keyValueToCondition<C extends CollectionName>(condition?: Partial<Record<keyof CollectionTypes[C], any>>): Condition<CollectionTypes[C]> | undefined {
+      const whereCon: Condition<CollectionTypes[C]> = {};
+      if (!condition) return;
+      for (const prop in condition) {
+        whereCon[prop] = typeof condition[prop] == 'object' ? condition[prop]! : {
+          "==": condition[prop]
+        }
+      }
+      return whereCon;
+    },
     async findRecords<C extends CollectionName>(collectionName: C, path?: string, condition?: Partial<Record<keyof CollectionTypes[C], any>>): Promise<CollectionTypes[C][]> {
       if (this.online) {
-
-        const results = await (condition ? firebaseService.findRecords(collectionName, path, condition as Condition<CollectionTypes[C]>)
+        const results = await (condition ? firebaseService.findRecords(collectionName, path, this.keyValueToCondition(condition))
           : firebaseService.findRecords(collectionName, path));
         results.forEach(async (item) => {
           const old = await localDb.table(collectionName).get(path ? [path, item.key] : item.key);

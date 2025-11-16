@@ -20,8 +20,7 @@ const teacherClasses = computed(() => {
 });
 
 onMounted(async () => {
-  await classStore.loadUserClasses(authStore.teacherAccount?.key || '');
-
+  await classStore.loadUserClasses(authStore.teacherAccount?.ownerKey || '');
   window.addEventListener('open-create-class-dialog', addNewClass);
 });
 
@@ -166,7 +165,7 @@ function deleteCourse(cls: ClassModel) {
         :key="String(theClass.key)"
         @click="navigateToClass(theClass)"
       >
-        <q-card class="card" @click="navigateToClass(theClass)">
+        <q-card class="card cursor-pointer" @click="navigateToClass(theClass)">
           <div
             class="banner"
             :style="{

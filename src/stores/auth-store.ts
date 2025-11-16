@@ -40,16 +40,20 @@ export const useAuthStore = defineStore('auth', {
       if (this.currentUser) {
         return this.currentUser;
       }
-      this.currentUser = await firebaseService.authorizeUser();
-      if (this.currentUser) {
-        const persistentStore = usePersistentStore();
-        if (navigator.onLine) {
-          persistentStore.updateOnlineState(true);
+      try {
+        this.currentUser = await firebaseService.authorizeUser();
+        if (this.currentUser) {
+          const persistentStore = usePersistentStore();
+          if (navigator.onLine) {
+            persistentStore.updateOnlineState(true);
+          }
+          const accounts = await persistentStore.findRecords('users', undefined, {
+            ownerKey: this.currentUser.uid
+          });
+          this.currentAccounts = accounts;
         }
-        const accounts = await persistentStore.findRecords('users', undefined, {
-          ownerKey: this.currentUser.uid
-        });
-        this.currentAccounts = accounts;
+      } catch {
+        return;
       }
       return this.currentUser;
     },

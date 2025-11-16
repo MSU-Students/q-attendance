@@ -24,7 +24,7 @@ const linksList: EssentialLinkProps[] = [
 onMounted(async () => {
   const studentAccount = authStore.studentAccount;
   if (studentAccount) {
-    await classStore.loadUserClasses(studentAccount.key);
+    await classStore.loadUserClasses(studentAccount.ownerKey);
   }
 });
 
@@ -121,9 +121,11 @@ function openEnrollDialog() {
       <div class="drawer-content">
         <div class="drawer-header q-px-md q-py-sm">
           <div class="row items-center no-wrap">
-            <q-icon size="28px" class="q-mr-sm">
-              <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
-            </q-icon>
+            <q-btn :to="{ name: 'home' }" dense flat>
+              <q-icon size="28px" class="q-mr-sm">
+                <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
+              </q-icon>
+            </q-btn>
             <div class="text-subtitle1 text-weight-bold">Q-Class Attendance</div>
           </div>
         </div>

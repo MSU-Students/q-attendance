@@ -2,8 +2,6 @@
 import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
-import { UserModel } from 'src/models/user.models';
-
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
@@ -47,10 +45,6 @@ const signinButton = () => {
 const signupButton = () => {
   void router.push({ name: 'register' });
 };
-
-const gotoDashboard = (role: UserModel['role']) => {
-  void router.push({ name: role });
-};
 </script>
 
 <template>
@@ -83,7 +77,7 @@ const gotoDashboard = (role: UserModel['role']) => {
 
           <!-- Auth Buttons (Right) -->
           <div class="auth-section desktop-nav">
-            <div v-if="authStore.currentAccounts">
+            <div v-if="authStore.currentUser">
               <q-btn
                 v-if="authStore.currentAccounts.length == 0"
                 unelevated
@@ -99,7 +93,7 @@ const gotoDashboard = (role: UserModel['role']) => {
                     :key="account.key"
                     clickable
                     v-close-popup
-                    @click="gotoDashboard(account.role)"
+                    :to="{ name: account.role }"
                   >
                     <q-item-section>
                       <q-item-label class="text-capitalize">{{ account.role }}</q-item-label>
@@ -150,7 +144,7 @@ const gotoDashboard = (role: UserModel['role']) => {
           v-if="authStore.currentAccounts.length"
           clickable
           v-ripple
-          @click="gotoDashboard(authStore.currentAccounts[0]?.role)"
+          :to="{ name: authStore.currentAccounts[0]?.role }"
         >
           <q-item-section>Dashboard</q-item-section>
         </q-item>

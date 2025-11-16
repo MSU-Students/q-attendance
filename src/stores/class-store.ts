@@ -34,7 +34,6 @@ export const useClassStore = defineStore('Class', {
         const classes = await persistentStore.findRecords('classes', undefined, {
           key: { in: classKeys },
         });
-        console.log(classes.filter((cls) => classKeeping.enrolled.includes(cls.key)));
         this.enrolled = classes.filter((cls) => classKeeping.enrolled.includes(cls.key));
         this.teaching = classes.filter((cls) => classKeeping.teaching.includes(cls.key));
         this.archivedEnrolled = classes.filter((cls) =>
@@ -104,14 +103,17 @@ export const useClassStore = defineStore('Class', {
     async enroll(payload: { class: ClassModel; student: UserModel }) {
       const persistentStore = usePersistentStore();
       const [student, cls] = await Promise.all([
-        persistentStore.createRecord('enrolled', payload.student, `/classes/${payload.class.key}`),
+        persistentStore.createRecord('enrolled', {
+          ...payload.student,
+          key: payload.student.ownerKey,
+        }, `/classes/${payload.class.key}`),
         persistentStore.getRecord('classes', payload.class.key),
       ]);
       if (student && cls) {
         cls.enrolled = cls.enrolled || [];
         cls.enrolled.push(student);
-        const keepings = await persistentStore.getRecord('class-keepings', payload.student.key);
-        await persistentStore.updateRecord('class-keepings', payload.student.key, {
+        const keepings = await persistentStore.getRecord('class-keepings', payload.student.ownerKey);
+        await persistentStore.updateRecord('class-keepings', payload.student.ownerKey, {
           enrolled: [...new Set([...(keepings?.enrolled || []), cls.key])],
         });
       }
@@ -119,20 +121,23 @@ export const useClassStore = defineStore('Class', {
     async join(payload: { class: ClassModel; teacher: UserModel }) {
       const persistentStore = usePersistentStore();
       const [teacher, cls] = await Promise.all([
-        persistentStore.createRecord('teachers', payload.teacher, `/classes/${payload.class.key}`),
+        persistentStore.createRecord('teachers', {
+          ...payload.teacher,
+          key: payload.teacher.ownerKey
+        }, `/classes/${payload.class.key}`),
         persistentStore.getRecord('classes', payload.class.key),
       ]);
       if (teacher && cls) {
         cls.teachers = cls.teachers || [];
         cls.teachers.push(teacher);
-        const keepings = await persistentStore.getRecord('class-keepings', payload.teacher.key);
-        await persistentStore.updateRecord('class-keepings', payload.teacher.key, {
+        const keepings = await persistentStore.getRecord('class-keepings', payload.teacher.ownerKey);
+        await persistentStore.updateRecord('class-keepings', payload.teacher.ownerKey, {
           teaching: [...new Set([...(keepings?.teaching || []), cls.key])],
         });
       }
     },
 
-    async unenroll(payload: { classKey: string; studentKey: string }) {
+    async unEnroll(payload: { classKey: string; studentKey: string }) {
       try {
         const persistentStore = usePersistentStore();
         const cls = await this.loadClass(payload.classKey);

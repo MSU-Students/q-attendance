@@ -234,10 +234,12 @@ class FirebaseService {
     }
     return false;
   }
+
   getAndWhere<T extends Entity>(condition: WhereCondition<T>) {
     const andCon: QueryFieldFilterConstraint[] = [];
-    for (const prop in condition) {
-      const con = condition[prop];
+    const cond = copyObject(condition);
+    for (const prop in cond) {
+      const con = cond[prop];
       for (const op in con) {
         const operator = op as WhereFilterOp;
         const val = con?.[operator];

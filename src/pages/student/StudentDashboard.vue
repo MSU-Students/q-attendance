@@ -35,7 +35,7 @@ onUnmounted(() => {
 
 async function loadStudentClasses() {
   if (authStore.studentAccount) {
-    await classStore.loadUserClasses(authStore.studentAccount.key);
+    await classStore.loadUserClasses(authStore.studentAccount.ownerKey);
   }
 }
 
@@ -186,9 +186,9 @@ async function unenrollCourse(cls: ClassModel) {
   }
 
   try {
-    const success = await classStore.unenroll({
+    const success = await classStore.unEnroll({
       classKey: cls.key,
-      studentKey: authStore.studentAccount?.key,
+      studentKey: authStore.studentAccount?.ownerKey,
     });
 
     if (success) {

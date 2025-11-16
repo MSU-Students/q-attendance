@@ -73,6 +73,17 @@ function goToRegister() {
     name: 'register',
   });
 }
+async function forgetPassword() {
+  if (username.value) {
+    await authStore.sendForgetPassword(username.value);
+    Notify.create({
+      message: 'Email Sent',
+      color: 'info',
+      icon: 'info',
+      position: 'top',
+    });
+  }
+}
 </script>
 
 <template>
@@ -142,7 +153,7 @@ function goToRegister() {
 
             <div class="options-row">
               <q-checkbox v-model="rememberMe" label="Remember me" dense color="primary" />
-              <a href="#" class="forgot-password">Forgot password?</a>
+              <a @click="forgetPassword" class="forgot-password cursor-pointer">Forgot password?</a>
             </div>
 
             <q-btn type="submit" class="submit-btn" :loading="loading" unelevated no-caps>

@@ -19,10 +19,11 @@ async function applyForRole(role: UserModel['role']) {
     } else {
       await router.replace({ name: 'status' });
     }
-  } catch {
+  } catch (e) {
     Notify.create({
       message: 'Registration failed. Please try again.',
       color: 'negative',
+      caption: String(e),
       icon: 'error',
       position: 'top',
     });
