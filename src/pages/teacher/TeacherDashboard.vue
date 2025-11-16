@@ -20,7 +20,7 @@ const teacherClasses = computed(() => {
 });
 
 onMounted(async () => {
-  await classStore.loadUserClasses(authStore.currentAccount?.key || '');
+  await classStore.loadUserClasses(authStore.teacherAccount?.key || '');
 
   window.addEventListener('open-create-class-dialog', addNewClass);
 });
@@ -34,7 +34,7 @@ function addNewClass() {
 }
 
 async function saveClass() {
-  if (authStore.currentAccount) {
+  if (authStore.currentAccounts) {
     Notify.create({
       message: 'You added a new class',
       color: 'green',
@@ -49,7 +49,10 @@ async function saveClass() {
       classCode: Math.random().toString(36).substring(2, 6).toUpperCase(),
       section: classSection.value,
     };
-    await classStore.saveClass(newClass, authStore.currentAccount);
+    const account = authStore.currentAccounts.find((a) => a.role == 'teacher');
+    if (account) {
+      await classStore.saveClass(newClass, account);
+    }
   }
 
   className.value = '';

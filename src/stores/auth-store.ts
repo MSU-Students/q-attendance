@@ -2,13 +2,26 @@ import { defineStore } from 'pinia';
 import { Notify } from 'quasar';
 import type { UserModel } from 'src/models/user.models';
 import { firebaseService } from 'src/services/firebase-service';
+import { usePersistentStore } from './persistent-store';
+import { User } from 'firebase/auth';
 interface IState {
-  currentAccount?: UserModel | undefined
+  currentAccounts: UserModel[],
+  currentUser?: User | undefined
 }
 export const useAuthStore = defineStore('auth', {
-  state: () => ({} as IState),
+  state: () => ({
+    currentAccounts: []
+  } as IState),
   getters: {
-    isUserAdmin: (state) => state.currentAccount?.role == 'admin',
+    isUserLoggedIn: (state) => !!state.currentUser,
+    isUserAdmin: (state) => state.currentAccounts.some(a => a.role == 'admin'),
+    isUserSupervisor: (state) => state.currentAccounts.some(a => a.role == 'supervisor'),
+    isUserTeacher: (state) => state.currentAccounts.some(a => a.role == 'teacher'),
+    isUserStudent: (state) => state.currentAccounts.some(a => a.role == 'student'),
+    adminAccount: (state) => state.currentAccounts.find(a => a.role == 'admin'),
+    supervisorAccount: (state) => state.currentAccounts.find(a => a.role == 'supervisor'),
+    teacherAccount: (state) => state.currentAccounts.find(a => a.role == 'teacher'),
+    studentAccount: (state) => state.currentAccounts.find(a => a.role == 'student'),
   },
   actions: {
     async login(username: string, password: string) {
@@ -18,49 +31,50 @@ export const useAuthStore = defineStore('auth', {
     async loginWithGoogle() {
       await firebaseService.signInWithGoogle();
       const user = await firebaseService.authorizeUser();
-      if (user) {
-        const userKey = user.uid;
-        const userData = await firebaseService.getRecord('users', userKey);
-
-        if (userData) {
-          return false;
-        }
-
-        return true;
+      return !!user;
+    },
+    async register(email: string, password: string, displayName: string) {
+      await firebaseService.registerWithEmailPassword(email, password, displayName);
+    },
+    async authorizeUser() {
+      if (this.currentUser) {
+        return this.currentUser;
       }
-      return false;
+      this.currentUser = await firebaseService.authorizeUser();
+      if (this.currentUser) {
+        const persistentStore = usePersistentStore();
+        const accounts = await persistentStore.findRecords('users', undefined, {
+          ownerKey: this.currentUser.uid
+        });
+        this.currentAccounts = accounts;
+      }
+      return this.currentUser;
     },
-    async register(email: string, password: string, displayName: string, role: string) {
-      await firebaseService.registerWithEmailPassword(email, password);
-      return this.authorizeUser(displayName, role);
-    },
-    async authorizeUser(displayName: string = '', role: string = '') {
-      const user = await firebaseService.authorizeUser();
-      if (user) {
-        this.currentAccount = {
-          key: user.uid,
-          avatar: user.photoURL || '',
-          email: user.email || '',
-          emailVerified: !!user.emailVerified,
-          fullName: user.displayName || displayName,
-          role: role as UserModel['role'],
-          status: 'active',
-
-        }
-        const userKey = this.currentAccount.key || '';
-        const userData = await firebaseService.getRecord('users', userKey);
-        this.currentAccount = {
-          ...this.currentAccount,
-          ...userData
-        }
-        await firebaseService.updateRecord('users', this.currentAccount.key || '', this.currentAccount);
-        return this.currentAccount;
+    async applyForRole(role: UserModel['role']) {
+      if (!this.currentUser) {
+        throw new Error('Unauthorized access');
+      }
+      const account: UserModel = {
+        key: `${this.currentUser.uid}-${role}`,
+        email: this.currentUser.email || '',
+        emailVerified: this.currentUser.emailVerified,
+        fullName: this.currentUser.displayName || 'Anonymous',
+        ownerKey: this.currentUser.uid,
+        avatar: this.currentUser.photoURL || '',
+        role,
+        status: ['student', 'teacher'].includes(role || '') ? 'active' : 'pending',
+      };
+      const persistentStore = usePersistentStore();
+      const oldAccount = await persistentStore.getRecord('users', account.key);
+      if (oldAccount) {
+        throw new Error('Account already exists: ' + (oldAccount.status));
       } else {
-        this.currentAccount = undefined;
+        return await persistentStore.createRecord('users', account);
       }
     },
     async updateRole(role: 'student' | 'teacher' | 'supervisor' | 'admin', key: string) {
-      await firebaseService.updateRecord('users', key, { role })
+      const persistentStore = usePersistentStore();
+      await persistentStore.updateRecord('users', key, { role })
         .then(() => {
           Notify.create({
             message: 'Role updated',
@@ -73,7 +87,8 @@ export const useAuthStore = defineStore('auth', {
         })
     },
     async updateStatus(status: 'active' | 'inactive' | 'pending', key: string) {
-      await firebaseService.updateRecord('users', key, { status })
+      const persistentStore = usePersistentStore();
+      await persistentStore.updateRecord('users', key, { status })
         .then(() => {
           Notify.create({
             message: `Status updated to ${status}`,

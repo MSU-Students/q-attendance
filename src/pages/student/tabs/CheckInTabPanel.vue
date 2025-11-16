@@ -13,7 +13,7 @@ defineProps<{
   meetings: ClassMeetingModel[];
 }>();
 const currentStudent = computed(() => {
-  return authStore.currentAccount;
+  return authStore.studentAccount;
 });
 const isCheckingIn = ref(false);
 async function checkInToSession(meeting: ClassMeetingModel) {
