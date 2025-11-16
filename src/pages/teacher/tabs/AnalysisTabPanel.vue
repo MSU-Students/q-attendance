@@ -53,32 +53,45 @@ const attendanceStats = computed(() => {
     absentCount: number;
     lateCount: number;
     attendanceRate: number;
+    maxConsecutiveAbsences: number;
   }> = [];
 
   students.forEach((student) => {
     let presentCount = 0;
     let absentCount = 0;
     let lateCount = 0;
+    let consecutiveAbsent = 0;
+    let maxConsecutiveAbsences = 0;
 
-    meetings.forEach((meeting: ClassMeetingModel) => {
-      const checkIn = meeting.checkIns?.find((ci) => ci.key === student.key);
-      if (checkIn) {
-        if (checkIn.status === 'present' || checkIn.status === 'check-in') {
-          presentCount++;
-        } else if (checkIn.status === 'absent') {
+    meetings
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .forEach((meeting: ClassMeetingModel, index) => {
+        const checkIn = meeting.checkIns?.find((ci) => ci.key === student.ownerKey);
+        if (checkIn) {
+          if (checkIn.status === 'present' || checkIn.status === 'check-in') {
+            presentCount++;
+          } else if (checkIn.status === 'absent') {
+            absentCount++;
+            consecutiveAbsent++;
+          } else if (checkIn.status === 'late') {
+            lateCount++;
+            presentCount++;
+          }
+        } else {
           absentCount++;
-        } else if (checkIn.status === 'late') {
-          lateCount++;
+          consecutiveAbsent++;
         }
-      } else {
-        absentCount++;
-      }
-    });
+        if (
+          ((checkIn && checkIn?.status != 'absent') || index + 1 == meetings.length) &&
+          consecutiveAbsent
+        ) {
+          maxConsecutiveAbsences = Math.max(maxConsecutiveAbsences, consecutiveAbsent);
+          consecutiveAbsent = 0;
+        }
+      });
 
     const attendanceRate =
-      meetings.length > 0
-        ? Math.round(((presentCount + lateCount) / meetings.length) * 100)
-        : 0;
+      meetings.length > 0 ? Math.round(((presentCount + lateCount) / meetings.length) * 100) : 0;
 
     studentStats.push({
       name: student.fullName || 'Unknown',
@@ -86,6 +99,7 @@ const attendanceStats = computed(() => {
       absentCount,
       lateCount,
       attendanceRate,
+      maxConsecutiveAbsences: maxConsecutiveAbsences > 1 ? maxConsecutiveAbsences : 0,
     });
   });
 
@@ -95,10 +109,7 @@ const attendanceStats = computed(() => {
 
   const averageAttendanceRate =
     studentStats.length > 0
-      ? Math.round(
-          studentStats.reduce((sum, s) => sum + s.attendanceRate, 0) /
-            studentStats.length
-        )
+      ? Math.round(studentStats.reduce((sum, s) => sum + s.attendanceRate, 0) / studentStats.length)
       : 0;
 
   return {
@@ -165,6 +176,12 @@ const attendanceStats = computed(() => {
           :columns="[
             { name: 'name', label: 'Student Name', field: 'name', align: 'left' },
             { name: 'present', label: 'Present', field: 'presentCount', align: 'center' },
+            {
+              name: 'absent',
+              label: 'Consecutive',
+              field: 'maxConsecutiveAbsences',
+              align: 'center',
+            },
             { name: 'absent', label: 'Absent', field: 'absentCount', align: 'center' },
             { name: 'late', label: 'Late', field: 'lateCount', align: 'center' },
             { name: 'rate', label: 'Attendance Rate', field: 'attendanceRate', align: 'center' },
@@ -175,7 +192,11 @@ const attendanceStats = computed(() => {
         >
           <template #body-cell-rate="props">
             <q-td :props="props">
-              <q-linear-progress :value="props.row.attendanceRate / 100" :color="getAttendanceColor(props.row.attendanceRate)" class="q-my-sm" />
+              <q-linear-progress
+                :value="props.row.attendanceRate / 100"
+                :color="getAttendanceColor(props.row.attendanceRate)"
+                class="q-my-sm"
+              />
               <span>{{ props.row.attendanceRate }}%</span>
             </q-td>
           </template>
