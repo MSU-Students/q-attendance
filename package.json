@@ -12,6 +12,7 @@
     "test": "vitest",
     "dev": "quasar dev",
     "build": "quasar build",
+    "build:pwa": "quasar build -m pwa",
     "postinstall": "quasar prepare",
     "test:ui": "vitest --ui"
   },
