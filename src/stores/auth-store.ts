@@ -43,6 +43,9 @@ export const useAuthStore = defineStore('auth', {
       this.currentUser = await firebaseService.authorizeUser();
       if (this.currentUser) {
         const persistentStore = usePersistentStore();
+        if (navigator.onLine) {
+          persistentStore.updateOnlineState(true);
+        }
         const accounts = await persistentStore.findRecords('users', undefined, {
           ownerKey: this.currentUser.uid
         });
@@ -69,7 +72,10 @@ export const useAuthStore = defineStore('auth', {
       if (oldAccount) {
         throw new Error('Account already exists: ' + (oldAccount.status));
       } else {
-        return await persistentStore.createRecord('users', account);
+        await persistentStore.createRecord('users', account);
+        this.currentUser = undefined;
+        await this.authorizeUser();
+        return account;
       }
     },
     async updateRole(role: 'student' | 'teacher' | 'supervisor' | 'admin', key: string) {
