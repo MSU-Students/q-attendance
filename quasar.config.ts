@@ -165,7 +165,7 @@ export default defineConfig((ctx) => {
 
     // https://v2.quasar.dev/quasar-cli-vite/developing-pwa/configuring-pwa
     pwa: {
-      workboxMode: 'injectManifest', // or 'injectManifest'
+      workboxMode: 'InjectManifest', // or 'injectManifest'
       injectPwaMetaTags: true,
       swFilename: 'sw.js',
       manifestFilename: 'manifest.json',
