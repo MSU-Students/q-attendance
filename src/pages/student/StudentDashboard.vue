@@ -34,8 +34,8 @@ onUnmounted(() => {
 });
 
 async function loadStudentClasses() {
-  if (authStore.currentAccount?.key) {
-    await classStore.loadUserClasses(authStore.currentAccount.key);
+  if (authStore.studentAccount) {
+    await classStore.loadUserClasses(authStore.studentAccount.ownerKey);
   }
 }
 
@@ -64,18 +64,18 @@ async function enrollInClass() {
     }
 
     if (
-      authStore.currentAccount?.key &&
-      foundClass.enrolled?.find((e) => e.key == authStore.currentAccount?.key)
+      authStore.studentAccount &&
+      foundClass.enrolled?.find((e) => e.key == authStore.studentAccount?.key)
     ) {
       codeError.value = 'You are already enrolled in this class.';
       isLoading.value = false;
       return;
     }
 
-    if (authStore.currentAccount) {
+    if (authStore.studentAccount) {
       await classStore.enroll({
         class: foundClass,
-        student: authStore.currentAccount,
+        student: authStore.studentAccount,
       });
 
       Notify.create({
@@ -149,7 +149,7 @@ function copyClassCode(cls: ClassModel): void {
 }
 
 async function unenrollCourse(cls: ClassModel) {
-  if (!cls.key || !authStore.currentAccount?.key) {
+  if (!cls.key || !authStore.studentAccount?.key) {
     return;
   }
 
@@ -186,9 +186,9 @@ async function unenrollCourse(cls: ClassModel) {
   }
 
   try {
-    const success = await classStore.unenroll({
+    const success = await classStore.unEnroll({
       classKey: cls.key,
-      studentKey: authStore.currentAccount.key,
+      studentKey: authStore.studentAccount?.ownerKey,
     });
 
     if (success) {
@@ -287,7 +287,8 @@ async function unenrollCourse(cls: ClassModel) {
           </q-card-section>
         </q-card>
       </div>
-    </div>    <q-dialog v-model="showEnrollDialog" persistent>
+    </div>
+    <q-dialog v-model="showEnrollDialog" persistent>
       <q-card class="enroll-dialog">
         <q-card-section class="row items-center q-pb-none">
           <div class="dialog-title">Join class</div>

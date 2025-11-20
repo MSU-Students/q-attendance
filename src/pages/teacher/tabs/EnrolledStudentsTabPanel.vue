@@ -37,6 +37,7 @@ async function saveStudent() {
       class: activeClass.value,
       student: {
         key: uid(),
+        ownerKey: '',
         email: studentEmail.value,
         fullName: studentName.value,
       },
@@ -48,7 +49,7 @@ async function saveStudent() {
 
 async function removeStudent(student: UserModel) {
   if (activeClass.value && student.key) {
-    await classStore.unenroll({
+    await classStore.unEnroll({
       classKey: activeClass.value.key,
       studentKey: student.key,
     });

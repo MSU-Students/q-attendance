@@ -1,11 +1,13 @@
 # Backend Endpoint Implementation - Complete ✅
 
 ## Overview
+
 A production-ready Firebase Cloud Function has been created to handle server-side Excel/CSV file uploads with robust validation, duplicate detection, and batch user imports.
 
 ## What Was Created
 
 ### 1. Cloud Functions Project (`functions/`)
+
 ```
 functions/
 ├── package.json          # Dependencies: firebase-admin, firebase-functions, xlsx, papaparse
@@ -21,6 +23,7 @@ functions/
 **Endpoint:** `POST /uploadUsers`
 
 **Features:**
+
 - ✅ Accepts base64-encoded Excel/CSV files up to 50MB
 - ✅ Server-side file parsing using `xlsx` and `papaparse`
 - ✅ Column mapping support for flexible imports
@@ -32,6 +35,7 @@ functions/
 - ✅ Health check endpoint (`GET /health`)
 
 **Request Format:**
+
 ```json
 {
   "fileData": "base64-encoded-file-content",
@@ -46,6 +50,7 @@ functions/
 ```
 
 **Response Format:**
+
 ```json
 {
   "success": 10,
@@ -57,6 +62,7 @@ functions/
 ```
 
 ### 3. Frontend Configuration (`src/config/api.config.ts`)
+
 ```typescript
 export const API_ENDPOINTS = {
   uploadUsers: `${CLOUD_FUNCTIONS_URL}/uploadUsers`,
@@ -66,6 +72,7 @@ export const API_ENDPOINTS = {
 Reads `VITE_CLOUD_FUNCTIONS_URL` from environment variables.
 
 ### 4. Updated ImportUsersDialog (`src/components/ImportUsersDialog.vue`)
+
 - Modified `confirmImport()` to send file to Cloud Function
 - Converts file to base64 before sending
 - Handles response and error states
@@ -73,6 +80,7 @@ Reads `VITE_CLOUD_FUNCTIONS_URL` from environment variables.
 - Displays per-row errors if import partially fails
 
 ### 5. Environment Configuration (`.env.local`)
+
 ```
 VITE_CLOUD_FUNCTIONS_URL=http://localhost:5001/msu-attendance/us-central1/api
 ```
@@ -80,7 +88,9 @@ VITE_CLOUD_FUNCTIONS_URL=http://localhost:5001/msu-attendance/us-central1/api
 For production, update to deployed Cloud Function URL.
 
 ### 6. Firebase Configuration (`firebase.json`)
+
 Added functions configuration:
+
 ```json
 {
   "functions": {
@@ -94,6 +104,7 @@ Added functions configuration:
 ## How It Works
 
 ### Local Development Flow
+
 1. **User uploads file** → ImportUsersDialog captures it
 2. **Convert to base64** → Send to Cloud Function via HTTP POST
 3. **Cloud Function processes:**
@@ -107,6 +118,7 @@ Added functions configuration:
 5. **Frontend updates** user list and shows summary
 
 ### Production Deployment
+
 ```bash
 # Build TypeScript
 cd functions && npm run build
@@ -121,12 +133,14 @@ firebase deploy --only functions
 ## Server-Side Validation & Benefits
 
 **Before:** Client-side parsing
+
 - ❌ Less secure (file processing in browser)
 - ❌ Limited error checking
 - ❌ Slower for large files
 - ❌ No audit trail
 
 **After:** Server-side processing
+
 - ✅ Secure file handling on Firebase infrastructure
 - ✅ Comprehensive validation (email format, duplicates, data types)
 - ✅ Efficient batch processing
@@ -135,6 +149,7 @@ firebase deploy --only functions
 - ✅ Transactional integrity (all-or-nothing semantics possible)
 
 ## File Size Support
+
 - **Local emulator:** Up to 50MB (configurable)
 - **Firebase Cloud Functions:** Up to 100MB (default)
 - **Typical usage:** 1,000-5,000 users per file
@@ -152,6 +167,7 @@ firebase deploy --only functions
 ## Testing
 
 ### Local Development
+
 ```bash
 # Terminal 1: Start emulator
 cd functions && npm run serve
@@ -163,6 +179,7 @@ npm run dev
 ```
 
 ### Manual Testing with curl
+
 ```bash
 curl -X POST http://localhost:5001/msu-attendance/us-central1/api/uploadUsers \
   -H "Content-Type: application/json" \
@@ -171,15 +188,15 @@ curl -X POST http://localhost:5001/msu-attendance/us-central1/api/uploadUsers \
 
 ## Configuration Files Reference
 
-| File | Purpose |
-|------|---------|
-| `functions/package.json` | Cloud Function dependencies |
-| `functions/tsconfig.json` | TypeScript compilation settings |
-| `functions/src/index.ts` | Main endpoint implementation |
-| `src/config/api.config.ts` | Frontend API configuration |
-| `src/components/ImportUsersDialog.vue` | Updated to use backend |
-| `.env.local` | Local Cloud Function URL |
-| `firebase.json` | Firebase deployment config |
+| File                                   | Purpose                         |
+| -------------------------------------- | ------------------------------- |
+| `functions/package.json`               | Cloud Function dependencies     |
+| `functions/tsconfig.json`              | TypeScript compilation settings |
+| `functions/src/index.ts`               | Main endpoint implementation    |
+| `src/config/api.config.ts`             | Frontend API configuration      |
+| `src/components/ImportUsersDialog.vue` | Updated to use backend          |
+| `.env.local`                           | Local Cloud Function URL        |
+| `firebase.json`                        | Firebase deployment config      |
 
 ## Architecture Diagram
 

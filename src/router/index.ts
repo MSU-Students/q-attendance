@@ -37,7 +37,7 @@ export default defineRouter(function (/* { store, ssrContext } */) {
 
   const authStore = useAuthStore();
 
-  const showNotif = () => {
+  const showNotification = () => {
     Notify.create({
       message: 'You do not have access to this page',
       color: 'negative',
@@ -49,21 +49,21 @@ export default defineRouter(function (/* { store, ssrContext } */) {
   };
 
   Router.beforeEach(async (to, from, next) => {
-    const user = await authStore.authorizeUser();
-    if (to.meta?.anonymous && user) {
-      showNotif();
+    await authStore.authorizeUser();
+    if (to.meta?.anonymous && authStore.isUserLoggedIn) {
+      showNotification();
       next({ name: 'home' });
-    } if (to.meta?.admin && user?.role !== 'admin') {
-      showNotif();
+    } if (to.meta?.admin && !authStore.isUserAdmin) {
+      showNotification();
       next({ name: 'home' });
-    } else if (to.meta?.supervisor && user?.role !== 'supervisor' && to.name != 'home') {
-      showNotif();
+    } else if (to.meta?.supervisor && !authStore.isUserSupervisor) {
+      showNotification();
       next({ name: 'home' });
-    } else if (to.meta?.teacher && user?.role !== 'teacher') {
-      showNotif();
+    } else if (to.meta?.teacher && !authStore.isUserTeacher) {
+      showNotification();
       next({ name: 'home' });
-    } else if (to.meta?.student && user?.role !== 'student') {
-      showNotif();
+    } else if (to.meta?.student && !authStore.isUserStudent) {
+      showNotification();
       next({ name: 'home' });
     } else {
       next();

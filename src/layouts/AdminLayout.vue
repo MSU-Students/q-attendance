@@ -64,7 +64,7 @@ function toggleUserManagement() {
         <q-btn round>
           <q-avatar>
             <img
-              :src="authStore.currentAccount?.avatar || 'https://cdn.quasar.dev/img/avatar.png'"
+              :src="authStore.currentUser?.photoURL || 'https://cdn.quasar.dev/img/avatar.png'"
             />
           </q-avatar>
           <q-menu>
