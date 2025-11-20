@@ -36,6 +36,7 @@
     "@intlify/unplugin-vue-i18n": "^4.0.0",
     "@quasar/app-vite": "^2.4.0",
     "@types/node": "^20.5.9",
+    "@types/papaparse": "^5.5.0",
     "@vitest/ui": "^4.0.8",
     "@vue/eslint-config-prettier": "^10.1.0",
     "@vue/eslint-config-typescript": "^14.4.0",

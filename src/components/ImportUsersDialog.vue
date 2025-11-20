@@ -109,12 +109,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Notify } from 'quasar';
-import { useUsersStore } from 'src/stores/user-store';
 import type { UserModel } from 'src/models/user.models';
 import Papa from 'papaparse';
-import { API_ENDPOINTS } from 'src/config/api.config';
 
 defineProps<{ modelValue: boolean }>();
+
 const emit = defineEmits(['update:modelValue']);
 
 const parsedUsers = ref<UserModel[]>([]);
@@ -130,7 +129,6 @@ const showColumnMapping = ref(false);
 const columnMapping = ref<Record<string, string>>({});
 const rawRows = ref<Array<Record<string, unknown>>>([]);
 const duplicates = ref<Array<{ email: string; count: number }>>([]);
-const userStore = useUsersStore();
 
 async function handleFileChange(e: Event) {
   const input = e.target as HTMLInputElement;
@@ -165,29 +163,20 @@ async function handleFileChange(e: Event) {
         const nameVal = row['name'];
         const emailVal = row['email'];
         const roleVal = row['role'];
-        const statusVal = row['status'];
         const roleStr =
           typeof roleVal === 'string' &&
           ['teacher', 'admin', 'supervisor', 'student'].includes(roleVal)
             ? (roleVal as 'teacher' | 'admin' | 'supervisor' | 'student')
             : 'student';
-        const statusStr =
-          typeof statusVal === 'string' && ['active', 'inactive', 'pending'].includes(statusVal)
-            ? (statusVal as 'active' | 'inactive' | 'pending')
-            : 'active';
         const keyStr = typeof row['key'] === 'string' ? row['key'] : `${Date.now()}_${idx}`;
         return {
           key: keyStr,
-          fullName:
-            typeof fullNameVal === 'string'
-              ? fullNameVal
-              : typeof nameVal === 'string'
-                ? nameVal
-                : '',
-          email: typeof emailVal === 'string' ? emailVal : '',
+          fullName: fullNameVal || nameVal || '',
+          email: emailVal || 'no@mail.com',
           role: roleStr,
-          status: statusStr,
-        };
+          status: 'active',
+          ownerKey: '',
+        } as UserModel;
       });
     } catch (err) {
       console.error('xlsx parse failed', err);
@@ -265,29 +254,24 @@ function mapRawRowsToUsers(): UserModel[] {
       obj[modelField] = row[csvCol];
     }
 
-    const fullNameVal = obj['fullName'];
-    const nameVal = obj['name'];
-    const emailVal = obj['email'];
+    const fullNameVal = obj['fullName'] as string;
+    const nameVal = obj['name'] as string;
+    const emailVal = obj['email'] as string;
     const roleVal = obj['role'];
-    const statusVal = obj['status'];
 
     const roleStr =
       typeof roleVal === 'string' && ['teacher', 'admin', 'supervisor', 'student'].includes(roleVal)
         ? (roleVal as 'teacher' | 'admin' | 'supervisor' | 'student')
         : 'student';
-    const statusStr =
-      typeof statusVal === 'string' && ['active', 'inactive', 'pending'].includes(statusVal)
-        ? (statusVal as 'active' | 'inactive' | 'pending')
-        : 'active';
     const keyStr = `${Date.now()}_${idx}`;
 
     users.push({
       key: keyStr,
-      fullName:
-        typeof fullNameVal === 'string' ? fullNameVal : typeof nameVal === 'string' ? nameVal : '',
+      fullName: fullNameVal || nameVal || '',
       email: typeof emailVal === 'string' ? emailVal : '',
       role: roleStr,
-      status: statusStr,
+      status: 'active',
+      ownerKey: '',
     });
   }
   return users;
@@ -330,59 +314,11 @@ async function confirmImport() {
 
     // Convert file to base64
     const arrayBuffer = await file.arrayBuffer();
-    const fileData = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
     // Send to Cloud Function
-    const response = await fetch(API_ENDPOINTS.uploadUsers, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fileData,
-        fileName: file.name,
-        columnMapping: columnMapping.value,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Upload failed');
-    }
-
-    // Handle response
-    if (result.failed && result.failed > 0) {
-      importErrors.value = result.errors.map((err: { row: number; error: string }) => ({
-        user: { email: err.error, fullName: `Row ${err.row}` },
-        error: err.error,
-      }));
-      Notify.create({
-        message: `Imported ${result.success} users; ${result.failed} failed; ${result.duplicates} duplicates`,
-        color: 'warning',
-      });
-    } else {
-      Notify.create({
-        message: `Imported ${result.success} users successfully!`,
-        color: 'positive',
-      });
-
-      // Reload users in store
-      await userStore.loadUsers();
-
-      // Reset form
-      parsedUsers.value = [];
-      rawRows.value = [];
-      columnMapping.value = {};
-      duplicates.value = [];
-      emit('update:modelValue', false);
-    }
   } catch (e) {
-    console.error('import failed', e);
-    Notify.create({
-      message: e instanceof Error ? e.message : 'Import failed',
-      color: 'negative',
-    });
-  } finally {
-    isImporting.value = false;
+    console.error(e);
   }
 }
 
