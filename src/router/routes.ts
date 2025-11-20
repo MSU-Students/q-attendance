@@ -78,6 +78,13 @@ const routes: RouteRecordRaw[] = [
     path: '/:catchAll(.*)*',
     component: () => import('pages/ErrorNotFound.vue'),
   },
+
+  //reporting dashboard
+  {
+    path: '/reporting-dashboard',
+    name: 'ReportingDashboard',
+    component: () => import('src/pages/ReportingDashboard.vue')
+  }
 ];
 
 export default routes;
