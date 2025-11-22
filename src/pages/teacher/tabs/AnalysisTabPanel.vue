@@ -3,6 +3,7 @@ import { ClassModel } from 'src/models/class.models';
 import { ClassMeetingModel } from 'src/models/attendance.models';
 import { useAttendanceStore } from 'src/stores/attendance-store';
 import { computed, ref, onUnmounted } from 'vue';
+import { calculateStudentAttendance } from 'src/utils/attendance-utils';
 
 const props = defineProps<{
   name: string;
@@ -57,49 +58,15 @@ const attendanceStats = computed(() => {
   }> = [];
 
   students.forEach((student) => {
-    let presentCount = 0;
-    let absentCount = 0;
-    let lateCount = 0;
-    let consecutiveAbsent = 0;
-    let maxConsecutiveAbsences = 0;
-
-    meetings
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .forEach((meeting: ClassMeetingModel, index) => {
-        const checkIn = meeting.checkIns?.find((ci) => ci.key === student.ownerKey);
-        if (checkIn) {
-          if (checkIn.status === 'present' || checkIn.status === 'check-in') {
-            presentCount++;
-          } else if (checkIn.status === 'absent') {
-            absentCount++;
-            consecutiveAbsent++;
-          } else if (checkIn.status === 'late') {
-            lateCount++;
-            presentCount++;
-          }
-        } else {
-          absentCount++;
-          consecutiveAbsent++;
-        }
-        if (
-          ((checkIn && checkIn?.status != 'absent') || index + 1 == meetings.length) &&
-          consecutiveAbsent
-        ) {
-          maxConsecutiveAbsences = Math.max(maxConsecutiveAbsences, consecutiveAbsent);
-          consecutiveAbsent = 0;
-        }
-      });
-
-    const attendanceRate =
-      meetings.length > 0 ? Math.round(((presentCount + lateCount) / meetings.length) * 100) : 0;
-
+    const stats = calculateStudentAttendance(meetings, student.ownerKey || '');
+    
     studentStats.push({
       name: student.fullName || 'Unknown',
-      presentCount,
-      absentCount,
-      lateCount,
-      attendanceRate,
-      maxConsecutiveAbsences: maxConsecutiveAbsences > 1 ? maxConsecutiveAbsences : 0,
+      presentCount: stats.presentCount,
+      absentCount: stats.absentCount,
+      lateCount: stats.lateCount,
+      attendanceRate: stats.attendanceRate,
+      maxConsecutiveAbsences: stats.maxConsecutiveAbsences,
     });
   });
 
