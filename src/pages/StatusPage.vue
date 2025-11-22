@@ -5,79 +5,87 @@ import { computed } from 'vue';
 
 const { logout } = useLogout();
 const authStore = useAuthStore();
-const account = computed(() => authStore.currentAccount);
+const accounts = computed(() => authStore.currentAccounts);
 const statusConfig = computed(() => {
-  if (account.value?.status === 'inactive') {
+  return accounts.value.map((account) => {
+    if (account?.status === 'inactive') {
+      return {
+        color: 'negative',
+        icon: 'block',
+        title: 'Access Denied',
+        message: 'Your account has been denied access. Please contact the administrator.',
+        ...account,
+      };
+    }
+    if (account?.status === 'pending') {
+      return {
+        color: 'warning',
+        icon: 'schedule',
+        title: 'Pending Approval',
+        message: 'Your account is awaiting administrator approval.',
+        ...account,
+      };
+    }
     return {
-      color: 'negative',
-      icon: 'block',
-      title: 'Access Denied',
-      message: 'Your account has been denied access. Please contact the administrator.',
+      color: 'positive',
+      icon: 'check_circle',
+      title: 'Access Granted',
+      message: 'You have full access to the system.',
+      ...account,
     };
-  }
-  if (account.value?.status === 'pending') {
-    return {
-      color: 'warning',
-      icon: 'schedule',
-      title: 'Pending Approval',
-      message: 'Your account is awaiting administrator approval.',
-    };
-  }
-  return {
-    color: 'positive',
-    icon: 'check_circle',
-    title: 'Access Granted',
-    message: 'You have full access to the system.',
-  };
+  });
 });
 </script>
 
 <template>
   <q-page class="q-pa-md status-page">
     <div class="status-container">
-      <q-card class="status-card">
-        <q-card-section>
-          <q-alert :color="statusConfig.color" :icon="statusConfig.icon" class="status-alert">
-            <h3 class="q-my-none">{{ statusConfig.title }}</h3>
-            <p class="q-mt-sm q-mb-none">{{ statusConfig.message }}</p>
-          </q-alert>
+      <q-banner v-if="accounts.length == 0">No Accounts Yet</q-banner>
+      <template v-else>
+        <q-card class="status-card" v-for="account in statusConfig" :key="account.key">
+          <q-card-section>
+            <div :color="account.color" :icon="account.icon" class="status-alert">
+              <h3 class="q-my-none">{{ account.title }}</h3>
+              <p class="q-mt-sm q-mb-none">{{ account.message }}</p>
+            </div>
 
-          <div v-if="account?.status === 'inactive'" class="q-mt-md">
-            <q-btn color="primary" @click="logout" class="full-width" label="Return to Login" />
-          </div>
+            <div v-if="account?.status === 'inactive'" class="q-mt-md">
+              <q-btn color="primary" @click="logout" class="full-width" label="Return to Login" />
+            </div>
 
-          <template v-else-if="account?.status === 'active'">
-            <div class="q-mt-lg account-info">
-              <h5 class="q-my-md">Account Details</h5>
-              <div class="info-grid">
-                <div class="info-item">
-                  <span class="info-label">Email:</span>
-                  <span class="info-value">{{ account?.email }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">Role:</span>
-                  <span class="info-value">{{ account.role }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">Status:</span>
-                  <span class="info-value text-positive">{{ account.status }}</span>
+            <template v-else-if="account?.status === 'active'">
+              <div class="q-mt-lg account-info">
+                <h5 class="q-my-md">Account Details</h5>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">{{ account?.email }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Role:</span>
+                    <span class="info-value">{{ account.role }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value text-positive">{{ account.status }}</span>
+                  </div>
                 </div>
               </div>
+            </template>
+
+            <div v-else class="q-mt-md pending-info">
+              <q-icon name="info" size="md" class="q-mr-sm" />
+              <p class="text-caption q-my-none">
+                Your account is under review. This process typically takes 1-2 business days.
+              </p>
             </div>
-          </template>
+          </q-card-section>
 
-          <div v-else class="q-mt-md pending-info">
-            <q-icon name="info" size="md" class="q-mr-sm" />
-            <p class="text-caption q-my-none">
-              Your account is under review. This process typically takes 1-2 business days.
-            </p>
-          </div>
-        </q-card-section>
-
-        <q-card-actions v-if="account?.status == 'pending'" class="q-px-md">
-          <q-btn color="primary" @click="logout" class="full-width" label="Logout" />
-        </q-card-actions>
-      </q-card>
+          <q-card-actions v-if="account?.status == 'pending'" class="q-px-md">
+            <q-btn color="primary" @click="logout" class="full-width" label="Logout" />
+          </q-card-actions>
+        </q-card>
+      </template>
     </div>
   </q-page>
 </template>

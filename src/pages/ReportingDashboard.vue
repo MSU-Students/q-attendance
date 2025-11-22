@@ -148,7 +148,6 @@ export default defineComponent({
 
         renderChart();
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error("Error loading reporting data", err);
         // In Quasar app you might prefer Notify
         alert("Error loading data: see console");

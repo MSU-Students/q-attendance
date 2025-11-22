@@ -43,6 +43,7 @@ async function saveStudent() {
       class: activeClass.value,
       student: {
         key: '',
+        ownerKey: '',
         email: 'dummy@mail.com',
         fullName: payload.student,
       },

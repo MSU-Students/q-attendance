@@ -15,8 +15,8 @@ const miniState = ref(false);
 const router = useRouter();
 
 onMounted(async () => {
-  if (authStore.currentAccount?.key) {
-    await classStore.loadUserClasses(authStore.currentAccount.key);
+  if (authStore.isUserTeacher) {
+    await classStore.loadUserClasses(authStore.teacherAccount!.ownerKey);
   }
 });
 
@@ -25,6 +25,10 @@ const linksList: EssentialLinkProps[] = [
     title: 'Dashboard',
     icon: 'space_dashboard',
     link: '/teacher',
+  }, {
+    title: 'Reporting Dashboard',
+    icon: 'analytics',
+    link: '/teacher/reporting',
   },
 ];
 
@@ -53,8 +57,8 @@ function openCreateClassDialog() {
         <q-toolbar-title class="ellipsis">
           <span class="greeting">Hi,</span>
           {{
-            authStore.currentAccount?.fullName
-              ? authStore.currentAccount?.fullName.split(' ')[0]
+            authStore.currentUser?.displayName
+              ? authStore.currentUser?.displayName.split(' ')[0]
               : ''
           }}!
         </q-toolbar-title>
@@ -65,7 +69,7 @@ function openCreateClassDialog() {
           <q-btn flat round class="avatar-btn">
             <q-avatar size="32px">
               <img
-                :src="authStore.currentAccount?.avatar || 'https://cdn.quasar.dev/img/avatar.png'"
+                :src="authStore.currentUser?.photoURL || 'https://cdn.quasar.dev/img/avatar.png'"
               />
             </q-avatar>
             <q-menu>
@@ -91,9 +95,11 @@ function openCreateClassDialog() {
         <q-card style="padding-top: 1rem">
           <q-card-section>
             <div class="flex items-center gap-2">
-              <q-icon size="2rem" class="self-center">
-                <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
-              </q-icon>
+              <q-btn dense flat :to="{ name: 'home' }">
+                <q-icon size="2rem" class="self-center">
+                  <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
+                </q-icon>
+              </q-btn>
               <div v-if="!miniState" style="font-size: 1.4rem; margin-left: 0.5rem">
                 <strong>Q-Class Attendance</strong>
               </div>
@@ -103,6 +109,15 @@ function openCreateClassDialog() {
 
         <q-list padding>
           <EssentialLink v-for="link in linksList" :key="link.title" v-bind="link" />
+
+          <q-item clickable v-ripple :to="{ name: 'reporting-dashboard' }">
+            <q-item-section avatar>
+              <q-icon name="analytics" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>Reporting Dashboard</q-item-label>
+            </q-item-section>
+          </q-item>
 
           <q-separator class="q-my-md" />
 

@@ -29,6 +29,7 @@ const routes: RouteRecordRaw[] = [
       { name: 'teacherClass', path: 'class/:classKey', component: () => import('pages/teacher/TeacherClassPage.vue'), meta: { teacher: true } },
       { name: 'createAttendance', path: 'class/:classKey/create-attendance', component: () => import('pages/teacher/CreateAttendancePage.vue'), meta: { teacher: true } },
       { name: 'rollCall', path: 'class/:classKey/meeting/:meetingKey/roll-call', component: () => import('pages/teacher/RollCallPage.vue'), meta: { teacher: true } },
+      { name: 'reporting', path: 'reporting', component: () => import('pages/ReportingDashboard.vue') }
     ]
   },
   // Supervisor Page
@@ -69,7 +70,16 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: 'login', name: 'login', component: () => import('pages/auth/LoginPage.vue'), meta: { anonymous: true } },
       { name: 'register', path: 'register', component: () => import('pages/auth/RegisterPage.vue'), meta: { anonymous: true } },
-
+      { name: 'apply-for-role', path: 'apply', component: () => import('pages/auth/ApplyForRolePage.vue'), meta: {} },
+    ]
+  },
+  {
+    path: '/kiosk',
+    component: () => import('layouts/KioskLayout.vue'),
+    children: [
+      {
+        path: 'guide', name: 'guide', component: () => import('pages/kiosk/GuidePage.vue'), meta: { anonymous: true }
+      }
     ]
   },
   // Always leave this as last one,
@@ -79,12 +89,8 @@ const routes: RouteRecordRaw[] = [
     component: () => import('pages/ErrorNotFound.vue'),
   },
 
-  //reporting dashboard
-  {
-    path: '/reporting-dashboard',
-    name: 'ReportingDashboard',
-    component: () => import('src/pages/ReportingDashboard.vue')
-  }
+  
+
 ];
 
 export default routes;

@@ -19,7 +19,10 @@ const signupButton = () => {
 };
 
 const gotoDashboard = () => {
-  void router.push(`${authStore.currentAccount?.role}`);
+  const account = authStore.currentAccounts[0];
+  if (account) {
+    void router.push({ name: `${account.role}` });
+  }
 };
 
 // For the role-based features section
@@ -75,79 +78,101 @@ const testimonials = [
   {
     name: 'Bin Jamal Abduljalel',
     role: 'Scrum Master',
-    image: 'https://lh3.googleusercontent.com/a-/ALV-UjVlsihMIjso3l6UKsjQX4ySkOAz-rqaUTX0bPJkUTKd4a9XD0k=s96-c',
+    image:
+      'https://lh3.googleusercontent.com/a-/ALV-UjVlsihMIjso3l6UKsjQX4ySkOAz-rqaUTX0bPJkUTKd4a9XD0k=s96-c',
     rating: 5,
-    quote: 'The attendance system is very efficient and has saved me a lot of time. It’s a great tool for students.',
+    quote:
+      'The attendance system is very efficient and has saved me a lot of time. It’s a great tool for students.',
   },
   {
     name: 'Xandryl Lou Saycon',
     role: 'Product Owner',
-    image: 'https://lh3.googleusercontent.com/a-/ALV-UjUHuy_Ys0CJczGtQs6OTs352zyFFV3di09cfvuFzMXQkag6xv8EUQ=s96-c',
+    image:
+      'https://lh3.googleusercontent.com/a-/ALV-UjUHuy_Ys0CJczGtQs6OTs352zyFFV3di09cfvuFzMXQkag6xv8EUQ=s96-c',
     rating: 5,
-    quote: 'The analytics dashboard gives me valuable insights into attendance patterns across all courses.',
+    quote:
+      'The analytics dashboard gives me valuable insights into attendance patterns across all courses.',
   },
   {
     name: 'Somaimah Ampaso',
     role: 'Quality Assurance',
-    image: 'https://lh3.googleusercontent.com/a-/ALV-UjVOB8ZBfthXCP_bguljbE5Kt7UcOekb9FL2rbRJximvvt2qT47G=s96-c',
+    image:
+      'https://lh3.googleusercontent.com/a-/ALV-UjVOB8ZBfthXCP_bguljbE5Kt7UcOekb9FL2rbRJximvvt2qT47G=s96-c',
     rating: 5,
-    quote: 'The mobile app makes it so easy to check in for classes. I never have to worry about missing attendance anymore.',
+    quote:
+      'The mobile app makes it so easy to check in for classes. I never have to worry about missing attendance anymore.',
   },
   {
     name: 'Jonaidah Caris',
     role: 'Quality Assurance',
-    image: 'https://lh3.googleusercontent.com/a-/ALV-UjVLIDXGWC6ObsvLFVnsPRN7zopz4Uzd4ZOYlvmfeU6wPaX4rG4rNOiCrrfFYbidNYl-TrbhGtlxbOqH8Ap95tx90msF0Ob1Co0ICIATUUyhW9q3muoeMxvSJr5FNBIIYiFUe8E9weePMHbzRM5LZJx96e8Re1fCTLb-rwsJYgSAjrFQuh-HitB9AZeGP8WJsfFu9MH6-aKJpAe9aqwS06CrCZox0Nq_4dO0EvI9L1qqqOUr_g1Pjggq7x0gBHmwNIzqLh_f8sybDfMAo9MBY_kkj4KrdA8vs4tO5691LzOwnWAEvd5L9zKuJop7QobgwX38B6T3uyWNXmbTbHz7wxcLMyAFTSyGHbhxbYe7MYDDO0-cHpIKhm5s_Gg06NIVkh627S-DxseX1E_xa58j35PpH6lUzh_9Texy6gOGqPeqVd2FE4NxTarjH11QLn9ikwkOVL2eyYhgLMGASUAGEhRGy_629OwU0sEorsQf9tOiG8J6qcNpt0pcaH_i8cbI0-VKnVAc_ZBAELF181cCaNHtV3hpAlIqdemTQJ_Ugmbzl3tlcKFD9IH8br9AbuO6Hie5Rz8mq4Vm_G1wxolqg4ijNs4Bp6rbcpdGrko0HZIOXkH5ES63-72de65MG6EDkRNtcldplxQAJMY5eiCGW7anrNQRhhlaGB84tNBLZIJKwHZuImWg10CFkCXEii6uBLOT4gWS0LR-u0WGvx7cfERlJfdBec-jkbb08PsxkhuzI_HFqn5Hw1TqnyVSXQv0c43bLdUbkvQOfINpFOTvFX0qch6R1ia9XFfTkNbFcVZ2wkEfSt8qMsjz-6u3zRTB8W3eV-fuauJmwPjTL7iTT5fO0dFTYGlY3n8GXRMGOOynfy2yTfb5FuWudKIO4zwRBSXEk2glm9xANdjgCcG4WsvY1xmXt4OZZefEyF6YGEV0ztzZwkkCcZkk_r71V1fiXyYe_PVD1WdsStWfEnQKn3OFJC6bKigmcg=s96-c',
+    image:
+      'https://lh3.googleusercontent.com/a-/ALV-UjVLIDXGWC6ObsvLFVnsPRN7zopz4Uzd4ZOYlvmfeU6wPaX4rG4rNOiCrrfFYbidNYl-TrbhGtlxbOqH8Ap95tx90msF0Ob1Co0ICIATUUyhW9q3muoeMxvSJr5FNBIIYiFUe8E9weePMHbzRM5LZJx96e8Re1fCTLb-rwsJYgSAjrFQuh-HitB9AZeGP8WJsfFu9MH6-aKJpAe9aqwS06CrCZox0Nq_4dO0EvI9L1qqqOUr_g1Pjggq7x0gBHmwNIzqLh_f8sybDfMAo9MBY_kkj4KrdA8vs4tO5691LzOwnWAEvd5L9zKuJop7QobgwX38B6T3uyWNXmbTbHz7wxcLMyAFTSyGHbhxbYe7MYDDO0-cHpIKhm5s_Gg06NIVkh627S-DxseX1E_xa58j35PpH6lUzh_9Texy6gOGqPeqVd2FE4NxTarjH11QLn9ikwkOVL2eyYhgLMGASUAGEhRGy_629OwU0sEorsQf9tOiG8J6qcNpt0pcaH_i8cbI0-VKnVAc_ZBAELF181cCaNHtV3hpAlIqdemTQJ_Ugmbzl3tlcKFD9IH8br9AbuO6Hie5Rz8mq4Vm_G1wxolqg4ijNs4Bp6rbcpdGrko0HZIOXkH5ES63-72de65MG6EDkRNtcldplxQAJMY5eiCGW7anrNQRhhlaGB84tNBLZIJKwHZuImWg10CFkCXEii6uBLOT4gWS0LR-u0WGvx7cfERlJfdBec-jkbb08PsxkhuzI_HFqn5Hw1TqnyVSXQv0c43bLdUbkvQOfINpFOTvFX0qch6R1ia9XFfTkNbFcVZ2wkEfSt8qMsjz-6u3zRTB8W3eV-fuauJmwPjTL7iTT5fO0dFTYGlY3n8GXRMGOOynfy2yTfb5FuWudKIO4zwRBSXEk2glm9xANdjgCcG4WsvY1xmXt4OZZefEyF6YGEV0ztzZwkkCcZkk_r71V1fiXyYe_PVD1WdsStWfEnQKn3OFJC6bKigmcg=s96-c',
     rating: 5,
-    quote: 'The attendance tracking system has transformed my classroom management. My students appreciate the efficient approach!',
+    quote:
+      'The attendance tracking system has transformed my classroom management. My students appreciate the efficient approach!',
   },
   {
     name: 'Janisah Macarimbang',
     role: 'Quality Assurance',
-    image: 'https://lh3.googleusercontent.com/a/ACg8ocJ6kQdqqeO0ihCY6-JQJ-mpdifPjdg_aFNij6fn09EqzYcofA=s96-c-mo',
+    image:
+      'https://lh3.googleusercontent.com/a/ACg8ocJ6kQdqqeO0ihCY6-JQJ-mpdifPjdg_aFNij6fn09EqzYcofA=s96-c-mo',
     rating: 5,
-    quote: 'Managing user permissions and monitoring system usage has never been easier. The admin dashboard is intuitive and powerful.',
+    quote:
+      'Managing user permissions and monitoring system usage has never been easier. The admin dashboard is intuitive and powerful.',
   },
   {
     name: 'Mohaymen Omar',
     role: 'Developer',
-    image: 'https://lh3.googleusercontent.com/a/ACg8ocJXxAYoLL8jr6Thv6ME3C_l5zknqDfUSQGRUPOg_PcpG-_wvLo0=s96-c',
+    image:
+      'https://lh3.googleusercontent.com/a/ACg8ocJXxAYoLL8jr6Thv6ME3C_l5zknqDfUSQGRUPOg_PcpG-_wvLo0=s96-c',
     rating: 5,
-    quote: 'I really enjoyed using the web app as it made my work easier! I love how it organizes my classes.',
+    quote:
+      'I really enjoyed using the web app as it made my work easier! I love how it organizes my classes.',
   },
   {
     name: 'Omar Batocala',
     role: 'Developer',
-    image: 'https://lh3.googleusercontent.com/a-/ALV-UjXG2lyEv3nfTmLXr-UAx-21iq78OGuICRLf5T6V8nFTwy6SGTA=s96-c',
+    image:
+      'https://lh3.googleusercontent.com/a-/ALV-UjXG2lyEv3nfTmLXr-UAx-21iq78OGuICRLf5T6V8nFTwy6SGTA=s96-c',
     rating: 5,
-    quote: 'Being able to check my attendance history for all courses in one place has been incredibly helpful.',
+    quote:
+      'Being able to check my attendance history for all courses in one place has been incredibly helpful.',
   },
   {
     name: 'Sarhan Mundig',
     role: 'Developer',
-    image: 'https://lh3.googleusercontent.com/a-/ALV-UjXpacO_OK2NGnka6jxYPXd-iUNvk2G62kqyA-xciJFPtoSvHDM=s96-c',
+    image:
+      'https://lh3.googleusercontent.com/a-/ALV-UjXpacO_OK2NGnka6jxYPXd-iUNvk2G62kqyA-xciJFPtoSvHDM=s96-c',
     rating: 5,
-    quote: 'Taking attendance is now quick and efficient. The detailed reports help me identify attendance patterns easily.',
+    quote:
+      'Taking attendance is now quick and efficient. The detailed reports help me identify attendance patterns easily.',
   },
   {
     name: 'Rafael Panalondong',
     role: 'Developer',
-    image: 'https://lh3.googleusercontent.com/a-/ALV-UjWC7CfQfd5HNC0zleMloSNUtHVPaxwb8fXyEtU55tBrccPZVYY=s96-c',
+    image:
+      'https://lh3.googleusercontent.com/a-/ALV-UjWC7CfQfd5HNC0zleMloSNUtHVPaxwb8fXyEtU55tBrccPZVYY=s96-c',
     rating: 5,
-    quote: 'The institution-wide analytics have transformed how we track and improve attendance across departments.',
+    quote:
+      'The institution-wide analytics have transformed how we track and improve attendance across departments.',
   },
   {
     name: 'Amal Sultan',
     role: 'Developer',
-    image: 'https://lh3.googleusercontent.com/a-/ALV-UjWP0P00BAHC2TsW2WpKGAk4jhlYDCKYmhlpKARrsFwpW7NDyCU=s96-c',
+    image:
+      'https://lh3.googleusercontent.com/a-/ALV-UjWP0P00BAHC2TsW2WpKGAk4jhlYDCKYmhlpKARrsFwpW7NDyCU=s96-c',
     rating: 5,
-    quote: 'The platform is user-friendly and helps me stay on top of my attendance and class schedules.',
+    quote:
+      'The platform is user-friendly and helps me stay on top of my attendance and class schedules.',
   },
   {
     name: 'Abdul Bari Azis',
     role: 'Developer',
-    image: 'https://lh3.googleusercontent.com/a/ACg8ocIVCZE9modXDFg6Xlm9gk1geAI5B3WQ0RTLeKMF5bRkvzDO7Q=s96-c-mo',
+    image:
+      'https://lh3.googleusercontent.com/a/ACg8ocIVCZE9modXDFg6Xlm9gk1geAI5B3WQ0RTLeKMF5bRkvzDO7Q=s96-c-mo',
     rating: 5,
-    quote: 'The system has streamlined my workflow completely. I can focus more on teaching and less on administrative tasks.',
+    quote:
+      'The system has streamlined my workflow completely. I can focus more on teaching and less on administrative tasks.',
   },
 ];
 
@@ -193,7 +218,7 @@ const portalLinks = [
               real-time updates and detailed analytics.
             </p>
             <div class="q-gutter-md">
-              <div v-if="authStore.currentAccount">
+              <div v-if="authStore.currentAccounts">
                 <q-btn size="lg" color="primary" label="Go to Dashboard" @click="gotoDashboard" />
               </div>
               <div v-else class="row q-col-gutter-md">
@@ -391,11 +416,7 @@ const portalLinks = [
       <div class="container">
         <h2 class="text-h4 text-weight-bold text-center q-mb-xl">What Our Users Say</h2>
         <div class="row q-col-gutter-lg">
-          <div
-            v-for="(testimonial, index) in testimonials"
-            :key="index"
-            class="col-12 col-md-4"
-          >
+          <div v-for="(testimonial, index) in testimonials" :key="index" class="col-12 col-md-4">
             <q-card class="testimonial-card q-mb-lg">
               <q-card-section class="text-center">
                 <q-avatar size="64px" class="q-mb-md">
