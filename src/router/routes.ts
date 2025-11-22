@@ -29,6 +29,7 @@ const routes: RouteRecordRaw[] = [
       { name: 'teacherClass', path: 'class/:classKey', component: () => import('pages/teacher/TeacherClassPage.vue'), meta: { teacher: true } },
       { name: 'createAttendance', path: 'class/:classKey/create-attendance', component: () => import('pages/teacher/CreateAttendancePage.vue'), meta: { teacher: true } },
       { name: 'rollCall', path: 'class/:classKey/meeting/:meetingKey/roll-call', component: () => import('pages/teacher/RollCallPage.vue'), meta: { teacher: true } },
+      { name: 'reporting', path: 'reporting', component: () => import('pages/ReportingDashboard.vue') }
     ]
   },
   // Supervisor Page
@@ -87,6 +88,9 @@ const routes: RouteRecordRaw[] = [
     path: '/:catchAll(.*)*',
     component: () => import('pages/ErrorNotFound.vue'),
   },
+
+  
+
 ];
 
 export default routes;

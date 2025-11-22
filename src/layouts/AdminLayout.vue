@@ -98,6 +98,17 @@ function toggleUserManagement() {
         <q-list padding>
           <EssentialLink v-for="link in linksList" :key="link.title" v-bind="link" />
 
+          <q-item clickable v-ripple :to="{ name: 'reporting-dashboard' }">
+            <q-item-section avatar>
+              <q-icon name="analytics" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>Reporting Dashboard</q-item-label>
+            </q-item-section>
+          </q-item>
+
+          <q-separator class="q-my-md" />
+
           <q-expansion-item
             v-if="!miniState"
             v-model="userManagementExpanded"
