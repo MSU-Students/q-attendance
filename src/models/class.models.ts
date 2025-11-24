@@ -11,9 +11,4 @@ export interface ClassModel extends Entity {
 }
 
 
-export interface ClassKeepingModel extends Entity {
-  teaching: string[];
-  archivedTeaching: string[];
-  enrolled: string[];
-  archivedEnrolled: string[];
-}
+
