@@ -2,12 +2,14 @@
 import { date, uid } from 'quasar';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useClassStore } from 'src/stores/class-store';
+import { useKeepingStore } from 'src/stores/keeping-store';
 import { computed, ref } from 'vue';
 
 const classStore = useClassStore();
+const keepingStore = useKeepingStore();
 const authStore = useAuthStore();
 const classes = computed(() => {
-  return classStore.teaching;
+  return keepingStore.teaching;
 });
 const showNewClassDialog = ref(false);
 const className = ref('');

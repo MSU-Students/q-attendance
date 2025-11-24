@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { copyToClipboard, date, Notify, uid, useQuasar } from 'quasar';
-import { useClassStore } from 'src/stores/class-store';
+import { useKeepingStore } from 'src/stores/keeping-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { ClassModel } from 'src/models/class.models';
 import { useRouter } from 'vue-router';
+import { useClassStore } from 'src/stores/class-store';
 
 const classStore = useClassStore();
+const keepingStore = useKeepingStore();
 const authStore = useAuthStore();
 const router = useRouter();
 const $q = useQuasar();
@@ -16,11 +18,11 @@ const className = ref('');
 const classSection = ref('');
 
 const teacherClasses = computed(() => {
-  return classStore.teaching;
+  return keepingStore.teaching;
 });
 
 onMounted(async () => {
-  await classStore.loadUserClasses(authStore.teacherAccount?.ownerKey || '');
+  await keepingStore.loadUserKeeping(authStore.teacherAccount?.ownerKey || '');
   window.addEventListener('open-create-class-dialog', addNewClass);
 });
 
