@@ -220,29 +220,25 @@ const currentStudent = ref<UserModel>();
 const currentCheckIn = ref<MeetingCheckInModel>();
 function selectNextStudent() {
   let nextIndex = 0;
-  if (!currentStudent.value && enrolledStudents.value.length) {
-    nextIndex = 0;
-  } else if (enrolledStudents.value.length && currentStudent.value) {
+  
+  // Find starting point
+  if (currentStudent.value) {
     nextIndex = enrolledStudents.value.findIndex((s) => s.key == currentStudent.value?.key) + 1;
   }
-  currentStudent.value = undefined;
-  while (
-    nextIndex >= 0 &&
-    nextIndex < enrolledStudents.value.length &&
-    (currentCheckIn.value?.status != 'check-in' || !currentStudent.value)
-  ) {
+  
+  // Get next student in sequence
+  if (nextIndex < enrolledStudents.value.length) {
     const student = enrolledStudents.value[nextIndex];
     if (student) {
-      currentStudent.value = {
-        ...student,
-      };
+      currentStudent.value = { ...student };
       currentCheckIn.value = studentCheckIns.value.find((c) => c.key == student.key);
     } else {
       currentStudent.value = undefined;
+      showDialog.value = false;
     }
-    nextIndex++;
-  }
-  if (!currentStudent.value) {
+  } else {
+    // No more students
+    currentStudent.value = undefined;
     showDialog.value = false;
   }
 }
