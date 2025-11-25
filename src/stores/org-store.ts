@@ -3,10 +3,21 @@ import { usePersistentStore } from './persistent-store';
 import { useKeepingStore } from './keeping-store';
 import { OrgModel, UserModel } from 'src/models';
 
+interface OrgStates {
+  organizations: OrgModel[]
+}
 export const useOrgStore = defineStore('orgStore', {
-  state: () => ({}),
+  state: () => ({
+    organizations: []
+  } as OrgStates),
   getters: {},
   actions: {
+    async loadAllOrganizations() {
+      const persistentStore = usePersistentStore();
+      const records = await persistentStore.findRecords('organizations');
+      this.organizations = records;
+      return records;
+    },
     async findOrgsByCode(orgCode: string) {
       const persistentStore = usePersistentStore();
       const records = await persistentStore.findRecords('organizations', undefined, {
@@ -35,7 +46,7 @@ export const useOrgStore = defineStore('orgStore', {
       keepingStore.deleteMembership(key);
     },
 
-    async saveOrg(payload: OrgModel, officer: UserModel) {
+    async saveNewOrg(payload: OrgModel, officer?: UserModel) {
       const persistentStore = usePersistentStore();
       const keepingStore = useKeepingStore();
       const record = await persistentStore.createRecord('organizations', {
@@ -43,13 +54,18 @@ export const useOrgStore = defineStore('orgStore', {
         officers: [],
         members: [],
       });
-      if (record) {
+      if (record && officer) {
         keepingStore.joinOrg(record);
         await this.appointOfficer({
           org: record,
           officer: officer,
         });
       }
+    },
+    async saveUpdateOrg(payload: OrgModel) {
+      const persistentStore = usePersistentStore();
+      const record = await persistentStore.updateRecord('organizations', payload.key, payload);
+      return record;
     },
 
     async join(payload: { org: OrgModel; student: UserModel }) {
