@@ -49,6 +49,7 @@ const routes: RouteRecordRaw[] = [
       { name: 'user-approvals', path: 'user-approvals', component: () => import('pages/admin/UserApprovals.vue'), meta: { admin: true } },
       { name: 'users', path: 'users', component: () => import('pages/admin/UsersPage.vue'), meta: { admin: true } },
       { name: 'role-management', path: 'role-management', component: () => import('pages/admin/RoleManagement.vue'), meta: { admin: true } },
+      { name: 'org-management', path: 'organizations', component: () => import('pages/admin/OrgsPage.vue'), meta: { admin: true } },
     ]
   },
 

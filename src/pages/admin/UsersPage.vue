@@ -4,6 +4,7 @@ import { UserModel } from 'src/models/user.models';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useUsersStore } from 'src/stores/user-store';
 import { computed, onMounted, ref } from 'vue';
+import ImportUsersDialog from 'src/components/ImportUsersDialog.vue';
 
 const userStore = useUsersStore();
 const authStore = useAuthStore();
@@ -30,6 +31,8 @@ onMounted(async () => {
   await userStore.loadUsers();
 });
 
+const showImportDialog = ref(false);
+
 async function updateStatus(status: 'active' | 'inactive' | 'pending', key: string) {
   await authStore.updateStatus(status, key);
   await userStore.loadUsers();
@@ -40,12 +43,15 @@ async function updateStatus(status: 'active' | 'inactive' | 'pending', key: stri
 <template>
   <q-page class="q-pa-md" style="margin-top: 1rem;">
     <q-table
-      title="Users"
+        title="Users"
       :rows="rows"
       :columns="columns"
       :rows-per-page-options="rowsPerPage"
       row-key="key"
     >
+        <template v-slot:top-right>
+          <q-btn color="primary" icon="file_upload" label="Import Users" @click="showImportDialog = true" />
+        </template>
       <template v-slot:body="props">
         <q-tr :props="props">
           <q-td key="fullName" :props="props">
@@ -90,6 +96,7 @@ async function updateStatus(status: 'active' | 'inactive' | 'pending', key: stri
         </q-tr>
       </template>
     </q-table>
+    <ImportUsersDialog v-model="showImportDialog" />
   </q-page>
 </template>
 

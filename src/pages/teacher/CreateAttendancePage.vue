@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useClassStore } from 'src/stores/class-store';
 import { useAttendanceStore } from 'src/stores/attendance-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { computed, onMounted, ref } from 'vue';
@@ -7,6 +6,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { date, uid, Notify } from 'quasar';
 import { ClassMeetingModel } from 'src/models/attendance.models';
 import { ClassModel } from 'src/models/class.models';
+import { useClassStore } from 'src/stores/class-store';
 
 const route = useRoute();
 const router = useRouter();

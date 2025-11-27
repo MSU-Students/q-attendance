@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { uid } from 'quasar';
-import { useClassStore } from 'src/stores/class-store';
+import { useKeepingStore } from 'src/stores/keeping-store';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import type { UserModel } from 'src/models/user.models';
+import { useClassStore } from 'src/stores/class-store';
 
 const route = useRoute();
 const classStore = useClassStore();
+const keepingStore = useKeepingStore();
 const activeClass = computed(() => {
   if (typeof route.params?.classKey == 'string') {
     const classKey = route.params.classKey;
-    return (classStore.teaching || []).find((c) => c.key == classKey);
+    return (keepingStore.teaching || []).find((c) => c.key == classKey);
   }
   return undefined;
 });

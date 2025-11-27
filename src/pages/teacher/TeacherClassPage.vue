@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { useClassStore } from 'src/stores/class-store';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { ClassModel } from 'src/models/class.models';
 import ClassMeetingListingTabPanel from './tabs/ClassMeetingListingTabPanel.vue';
 import EnrolledStudentsTabPanel from './tabs/EnrolledStudentsTabPanel.vue';
 import AnalysisTabPanel from './tabs/AnalysisTabPanel.vue';
+import { useClassStore } from 'src/stores/class-store';
 
 const route = useRoute();
 const classStore = useClassStore();

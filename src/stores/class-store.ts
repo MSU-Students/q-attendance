@@ -1,62 +1,12 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
-import type { ClassModel } from 'src/models/class.models';
-import type { UserModel } from 'src/models/user.models';
 import { usePersistentStore } from './persistent-store';
+import { ClassModel, UserModel } from 'src/models';
+import { useKeepingStore } from './keeping-store';
 
-interface IState {
-  teaching: ClassModel[];
-  archivedTeaching: ClassModel[];
-  enrolled: ClassModel[];
-  archivedEnrolled: ClassModel[];
-}
-
-export const useClassStore = defineStore('Class', {
-  state: () =>
-    ({
-      teaching: [],
-      enrolled: [],
-      archivedEnrolled: [],
-      archivedTeaching: [],
-    }) as IState,
-
+export const useClassStore = defineStore('class', {
+  state: () => ({}),
   getters: {},
-
   actions: {
-    async loadUserClasses(userKey: string, loadArchived?: boolean) {
-      const persistentStore = usePersistentStore();
-      const classKeeping = await persistentStore.getRecord('class-keepings', userKey);
-      if (classKeeping) {
-        const classKeys = [...classKeeping.enrolled, ...classKeeping.teaching];
-        if (loadArchived) {
-          //TODO:limit size
-          classKeys.push(...classKeeping.archivedEnrolled, ...classKeeping.archivedTeaching);
-        }
-        const classes = await persistentStore.findRecords('classes', undefined, {
-          key: { in: classKeys },
-        });
-        this.enrolled = classes.filter((cls) => classKeeping.enrolled.includes(cls.key));
-        this.teaching = classes.filter((cls) => classKeeping.teaching.includes(cls.key));
-        this.archivedEnrolled = classes.filter((cls) =>
-          classKeeping.archivedEnrolled.includes(cls.key),
-        );
-        this.archivedTeaching = classes.filter((cls) =>
-          classKeeping.archivedTeaching.includes(cls.key),
-        );
-      } else {
-        await persistentStore.createRecord('class-keepings', {
-          key: userKey,
-          enrolled: [],
-          teaching: [],
-          archivedEnrolled: [],
-          archivedTeaching: [],
-        });
-        this.enrolled = [];
-        this.teaching = [];
-        this.archivedEnrolled = [];
-        this.archivedTeaching = [];
-      }
-    },
-
     async findClassByCode(classCode: string) {
       const persistentStore = usePersistentStore();
       const records = await persistentStore.findRecords('classes', undefined, {
@@ -80,19 +30,21 @@ export const useClassStore = defineStore('Class', {
     },
     async deleteClass(key: string) {
       const persistentStore = usePersistentStore();
+      const keepingStore = useKeepingStore();
       await persistentStore.deleteRecord('classes', key);
-      this.teaching = this.teaching.filter((c) => c.key !== key);
+      keepingStore.deleteTeaching(key);
     },
 
     async saveClass(payload: ClassModel, teacher: UserModel) {
       const persistentStore = usePersistentStore();
+      const keepingStore = useKeepingStore();
       const record = await persistentStore.createRecord('classes', {
         ...payload,
         teachers: undefined,
         enrolled: undefined,
       });
       if (record) {
-        this.teaching.push(record);
+        keepingStore.addTeaching(record);
         await this.join({
           class: record,
           teacher: teacher,
@@ -140,6 +92,7 @@ export const useClassStore = defineStore('Class', {
     async unEnroll(payload: { classKey: string; studentKey: string }) {
       try {
         const persistentStore = usePersistentStore();
+        const keepingStore = useKeepingStore();
         const cls = await this.loadClass(payload.classKey);
 
         if (
@@ -170,24 +123,14 @@ export const useClassStore = defineStore('Class', {
             enrolled: updatedEnrolled,
           });
         }
-
-        this.enrolled = this.enrolled.filter((c) => c.key !== payload.classKey);
-
-        const teaching = this.teaching.find((c) => c.key == cls.key);
-        if (teaching && teaching.enrolled) {
-          const student = teaching.enrolled.find((e) => e.key == payload.studentKey);
-          if (student) {
-            student.status = 'inactive';
-          }
-        }
-
+        keepingStore.unEnroll(payload.classKey, payload.studentKey);
         return true;
       } catch (error) {
         console.error('Error un-enrolling student:', error);
         return false;
       }
     },
-  },
+  }
 });
 
 if (import.meta.hot) {

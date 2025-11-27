@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import EssentialLink, { EssentialLinkProps } from 'src/components/EssentialLink.vue';
 import { useAuthStore } from 'src/stores/auth-store';
-import { useClassStore } from 'src/stores/class-store';
+import { useKeepingStore } from 'src/stores/keeping-store';
 import { useLogout } from 'src/utils/redirect';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const { logout } = useLogout();
 const authStore = useAuthStore();
-const classStore = useClassStore();
+const classStore = useKeepingStore();
 
 const drawer = ref(false);
 const miniState = ref(false);
@@ -16,7 +16,7 @@ const router = useRouter();
 
 onMounted(async () => {
   if (authStore.isUserTeacher) {
-    await classStore.loadUserClasses(authStore.teacherAccount!.ownerKey);
+    await classStore.loadUserKeeping(authStore.teacherAccount!.ownerKey);
   }
 });
 

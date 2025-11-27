@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useClassStore } from 'src/stores/class-store';
 import { useAttendanceStore } from 'src/stores/attendance-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
@@ -8,6 +7,7 @@ import { ClassMeetingModel } from 'src/models/attendance.models';
 import { ClassModel } from 'src/models/class.models';
 import CheckInTabPanel from './tabs/CheckInTabPanel.vue';
 import ClassHistoryTabPanel from './tabs/ClassHistoryTabPanel.vue';
+import { useClassStore } from 'src/stores/class-store';
 
 const route = useRoute();
 const classStore = useClassStore();

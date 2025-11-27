@@ -1,7 +1,7 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import { CollectionName, CollectionTypes } from 'src/services/collection.type';
 import { localDb } from 'src/services/dexie-service';
-import { Condition, firebaseService } from 'src/services/firebase-service';
+import { Condition, copyObject, firebaseService } from 'src/services/firebase-service';
 
 export const usePersistentStore = defineStore('persistent', {
   state: () => ({
@@ -61,7 +61,7 @@ export const usePersistentStore = defineStore('persistent', {
     },
     async createRecord<C extends CollectionName>(collectionName: C, record: CollectionTypes[C], path?: string): Promise<CollectionTypes[C] | undefined> {
       if (this.online) {
-        await firebaseService.createRecord(collectionName, record, path);
+        await firebaseService.createRecord(collectionName, copyObject(record), path);
         const item = {
           ...record,
           created_online: new Date(),
@@ -113,16 +113,16 @@ export const usePersistentStore = defineStore('persistent', {
     async updateRecord<C extends CollectionName>(collectionName: C, key: string, record: Partial<CollectionTypes[C]>, path?: string): Promise<boolean> {
       const oldRecord = await localDb.table(collectionName).get(path ? [path, key] : key);
       if (oldRecord && oldRecord.created_online === false && this.online) {
-        await firebaseService.createRecord(collectionName, oldRecord, path);
+        await firebaseService.createRecord(collectionName, copyObject(oldRecord), path);
       }
       if (this.online) {
-        await firebaseService.updateRecord(collectionName, key, record, path);
+        await firebaseService.updateRecord(collectionName, key, copyObject(record), path);
         const item = {
           ...record,
           path,
           updated_online: new Date()
         };
-        await localDb.table(collectionName).update(path ? [path, key] : key, item);
+        await localDb.table(collectionName).update(path ? [path, key] : key, copyObject(item));
         return !!item;
       } else {
         const item = {
@@ -130,7 +130,7 @@ export const usePersistentStore = defineStore('persistent', {
           path,
           updated_online: false
         };
-        await localDb.table(collectionName).update(path ? [path, key] : key, item);
+        await localDb.table(collectionName).update(path ? [path, key] : key, copyObject(item));
         return !!item;
       }
     },
