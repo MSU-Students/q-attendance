@@ -38,7 +38,36 @@ const checkedInStudents = computed(() => {
       };
     })
     .filter((c) => c.status != 'absent');
-});
+  });
+
+  async function validateMeeting() {
+      try {
+        isUpdating.value = true;
+        await attendanceStore.validateMeeting(props.meeting.key);
+        // refresh meeting
+        currentMeeting.value = await attendanceStore.loadMeeting(props.meeting.key);
+        Notify.create({ message: 'Validation complete', color: 'positive', icon: 'check_circle' });
+      } catch (error) {
+        console.error('Error validating meeting:', error);
+        Notify.create({ message: 'Validation failed', color: 'negative', icon: 'error' });
+      } finally {
+        isUpdating.value = false;
+      }
+    }
+
+async function revalidateCheckIn(checkInKey: string) {
+      try {
+        isUpdating.value = true;
+        await attendanceStore.validateCheckIn(props.meeting.key, checkInKey);
+        currentMeeting.value = await attendanceStore.loadMeeting(props.meeting.key);
+        Notify.create({ message: 'Check-in revalidated', color: 'positive', icon: 'check_circle' });
+      } catch (error) {
+        console.error('Error validating check-in:', error);
+        Notify.create({ message: 'Check-in validation failed', color: 'negative', icon: 'error' });
+      } finally {
+            isUpdating.value = false;
+          }
+        }
 
 const absentStudents = computed(() => {
   if (!allCheckIns.value.length) return [];
@@ -198,10 +227,14 @@ function reopenAttendanceSession() {
               <q-item-label caption> Check-in time: {{ student.checkInTime }} </q-item-label>
             </q-item-section>
 
-            <q-item-section side>
+            <q-item-section side class="row items-center">
               <q-badge :color="getStatusColor(student.status)">
                 {{ getStatusLabel(student.status) }}
               </q-badge>
+              <q-space />
+              <q-badge v-if="student.validation?.status === 'valid'" color="green">Validated</q-badge>
+              <q-badge v-else-if="student.validation?.status === 'invalid'" color="red" title="{{ student.validation?.reason }}">Invalid</q-badge>
+              <q-btn flat small dense icon="replay" @click.stop.prevent="revalidateCheckIn(student.key)" />
             </q-item-section>
           </q-item>
           <q-item-label v-if="absentStudents.length" header class="text-h5 q-mb-md bg-primary"
@@ -229,6 +262,7 @@ function reopenAttendanceSession() {
       </q-card-section>
 
       <q-card-actions align="right">
+        <q-btn flat label="Validate" color="primary" :loading="isUpdating" @click="validateMeeting" />
         <q-btn
           v-if="meeting.status === 'open'"
           color="primary"

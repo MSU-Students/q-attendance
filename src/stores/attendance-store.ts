@@ -108,6 +108,7 @@ export const useAttendanceStore = defineStore('attendance', {
           key: payload.student,
           checkInTime: checkInTime,
           status: payload.status || 'check-in',
+          validation: { status: 'unverified' }
         };
         await Promise.all([
           persistentStore.createRecord('check-ins',
@@ -119,9 +120,66 @@ export const useAttendanceStore = defineStore('attendance', {
           })
         ]);
 
+        // Auto-validate the new check-in
+        try {
+          await this.validateCheckIn(payload.meeting.key, checkInRecord.key);
+        } catch (err) {
+          console.error('Error auto-validating new check-in:', err);
+        }
+
         return checkInRecord;
       } catch (error) {
         console.error('Error checking in:', error);
+        throw error;
+      }
+    },
+
+    async validateCheckIn(meetingKey: string, checkInKey?: string) {
+      try {
+        const persistentStore = usePersistentStore();
+        const meeting = await persistentStore.getRecord('meetings', meetingKey);
+        if (!meeting) throw new Error('Meeting not found');
+
+        const checkIns = await persistentStore.findRecords('check-ins', `/meetings/${meetingKey}`);
+        const meetingDate = new Date(meeting.date);
+        const cuValidWindowStart = new Date(meetingDate.getTime() - 60 * 60 * 1000); // 60 mins before
+        const cuValidWindowEnd = new Date(meetingDate.getTime() + 30 * 60 * 1000); // 30 mins after
+
+        const targets = checkIns.filter((c: any) => (checkInKey ? c.key === checkInKey : true));
+        for (const rec of targets) {
+          const checkInTime = new Date(rec.checkInTime || '');
+          let status: MeetingCheckInModel['validation'] = { status: 'valid' as const };
+          if (!rec.checkInTime) {
+            status = { status: 'invalid', reason: 'No check-in time recorded' };
+          } else if (rec.status === 'absent') {
+            status = { status: 'invalid', reason: 'Marked absent' };
+          } else if (isNaN(checkInTime.getTime())) {
+            status = { status: 'invalid', reason: 'Invalid check-in time' };
+          } else if (checkInTime < cuValidWindowStart || checkInTime > cuValidWindowEnd) {
+            status = { status: 'invalid', reason: 'Check-in outside allowed time window' };
+          } else {
+            status = { status: 'valid' };
+          }
+
+          await persistentStore.updateRecord('check-ins', rec.key, { validation: status }, `/meetings/${meetingKey}`);
+        }
+        return true;
+      } catch (error) {
+        console.error('Error validating check-in:', error);
+        throw error;
+      }
+    },
+
+    async validateMeeting(meetingKey: string) {
+      try {
+        const persistentStore = usePersistentStore();
+        const checkIns = await persistentStore.findRecords('check-ins', `/meetings/${meetingKey}`);
+        for (const c of checkIns) {
+          await this.validateCheckIn(meetingKey, c.key);
+        }
+        return true;
+      } catch (error) {
+        console.error('Error validating meeting check-ins:', error);
         throw error;
       }
     },
@@ -191,6 +249,14 @@ export const useAttendanceStore = defineStore('attendance', {
           status: 'concluded',
           latestCall: now
         });
+
+        // Trigger automated validation when meeting is concluded
+        try {
+          await this.validateMeeting(meetingKey);
+        } catch (err) {
+          // Validation failure shouldn't block the conclusion; log the error
+          console.error('Automated validation failed for meeting after conclusion:', err);
+        }
 
         return true;
       } catch (error) {

@@ -75,8 +75,9 @@ const studentsWithStatus = computed(() => {
   return enrolledStudents.value.map((student) => {
     const studentKey = student.key || '';
     const checkIn = studentCheckIns.value.find((c) => c.key === studentKey);
-    return {
+      return {
       key: studentKey,
+        validation: checkIn?.validation || { status: 'unverified' },
       name: student.fullName || 'Unknown Student',
       email: student.email || '',
       avatar: student.avatar,
@@ -302,6 +303,7 @@ function startRollCall() {
               { name: 'name', label: 'Student Name', field: 'name', align: 'left', sortable: true },
               { name: 'checkInTime', label: 'Check-in Time', field: 'checkInTime', align: 'left' },
               { name: 'status', label: 'Status', field: 'status', align: 'center' },
+              { name: 'validation', label: 'Validation', field: 'validation', align: 'center' },
             ]"
             row-key="key"
             :pagination="{ rowsPerPage: 0 }"
@@ -330,6 +332,14 @@ function startRollCall() {
                   ]"
                   @update:model-value="updateStudentStatus(props.row.key, $event)"
                 />
+              </q-td>
+            </template>
+            <template v-slot:body-cell-validation="props">
+              <q-td :props="props" class="q-gutter-sm">
+                <q-badge :color="props.row.validation?.status === 'valid' ? 'green' : (props.row.validation?.status === 'invalid' ? 'red' : 'grey')">
+                  {{ props.row.validation?.status || 'unverified' }}
+                </q-badge>
+                <q-btn flat small dense icon="replay" @click.stop.prevent="attendanceStore.validateCheckIn(currentMeeting.key, props.row.key)" />
               </q-td>
             </template>
           </q-table>

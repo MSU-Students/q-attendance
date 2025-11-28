@@ -20,4 +20,8 @@ export interface MeetingCheckInModel extends Entity {
   status: 'check-in' | 'absent' | 'late' | 'present';
   markedInTime?: string;
   comments?: CheckInComments[];
+  validation?: {
+    status: 'valid' | 'invalid' | 'unverified';
+    reason?: string;
+  }
 }
