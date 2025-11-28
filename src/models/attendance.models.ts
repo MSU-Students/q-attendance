@@ -5,6 +5,7 @@ export interface ClassMeetingModel extends Entity {
   date: string;
   status: 'open' | 'cancelled' | 'concluded';
   teacher: string;
+  location?: { lat: number; lng: number };
   checkIns?: MeetingCheckInModel[] | undefined,
   latestCheckIn?: string;
   latestCall?: string;
@@ -24,4 +25,6 @@ export interface MeetingCheckInModel extends Entity {
     status: 'valid' | 'invalid' | 'unverified';
     reason?: string;
   }
+  location?: { lat: number; lng: number };
+  validationHistory?: { status: 'valid' | 'invalid' | 'unverified'; reason?: string; by?: string; date: string }[];
 }
