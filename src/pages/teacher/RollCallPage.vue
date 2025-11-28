@@ -75,8 +75,9 @@ const studentsWithStatus = computed(() => {
   return enrolledStudents.value.map((student) => {
     const studentKey = student.key || '';
     const checkIn = studentCheckIns.value.find((c) => c.key === studentKey);
-    return {
+      return {
       key: studentKey,
+        validation: checkIn?.validation || { status: 'unverified' },
       name: student.fullName || 'Unknown Student',
       email: student.email || '',
       avatar: student.avatar,
@@ -204,6 +205,33 @@ async function saveRollCall(isSubmit: boolean = false) {
   }
   isSubmitting.value = false;
 }
+async function overrideValidationForRow(row) {
+  try {
+    const reason = await new Promise((resolve) => {
+      const d = Dialog.create({ title: 'Override Validation', prompt: { model: '', type: 'text' }, ok: { label: 'Next' }, cancel: true });
+      d.onOk((val) => resolve(val));
+      d.onCancel(() => resolve(null));
+    });
+    if (reason === null) return;
+    const confirmed = await new Promise((resolve) => {
+      const d2 = Dialog.create({
+      title: 'Select Validation',
+      message: 'Choose the validation status for this check-in',
+      ok: { label: 'Valid', color: 'green' },
+      cancel: { label: 'Invalid', color: 'red' },
+      });
+      d2.onOk(() => resolve(true));
+      d2.onCancel(() => resolve(false));
+    });
+    const status = confirmed ? 'valid' : 'invalid';
+    await attendanceStore.updateCheckInValidation({ meetingKey: currentMeeting.value?.key || '', checkInKey: row.key, status, reason: reason as string });
+    currentMeeting.value = await attendanceStore.loadMeeting(currentMeeting.value?.key || '');
+    Notify.create({ message: 'Override applied' });
+  } catch (err) {
+    console.error('Override failed', err);
+    Notify.create({ message: 'Override failed', color: 'negative' });
+  }
+}
 function cancelRollCall() {
   void router.push({
     name: 'teacherClass',
@@ -302,6 +330,7 @@ function startRollCall() {
               { name: 'name', label: 'Student Name', field: 'name', align: 'left', sortable: true },
               { name: 'checkInTime', label: 'Check-in Time', field: 'checkInTime', align: 'left' },
               { name: 'status', label: 'Status', field: 'status', align: 'center' },
+              { name: 'validation', label: 'Validation', field: 'validation', align: 'center' },
             ]"
             row-key="key"
             :pagination="{ rowsPerPage: 0 }"
@@ -330,6 +359,15 @@ function startRollCall() {
                   ]"
                   @update:model-value="updateStudentStatus(props.row.key, $event)"
                 />
+              </q-td>
+            </template>
+            <template v-slot:body-cell-validation="props">
+              <q-td :props="props" class="q-gutter-sm">
+                <q-badge :color="props.row.validation?.status === 'valid' ? 'green' : (props.row.validation?.status === 'invalid' ? 'red' : 'grey')">
+                  {{ props.row.validation?.status || 'unverified' }}
+                </q-badge>
+                <q-btn flat small dense icon="replay" @click.stop.prevent="attendanceStore.validateCheckIn(currentMeeting.key, props.row.key)" />
+                <q-btn flat small dense icon="edit" @click.stop.prevent="overrideValidationForRow(props.row)" />
               </q-td>
             </template>
           </q-table>
