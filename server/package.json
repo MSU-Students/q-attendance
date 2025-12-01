@@ -1,0 +1,17 @@
+{
+  "name": "instructor-api",
+  "version": "1.0.0",
+  "description": "Backend API for instructor file uploads and database commits.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "firebase-admin": "^11.11.1",
+    "multer": "^1.4.5-lts.1",
+    "xlsx": "^0.18.5"
+  }
+}
