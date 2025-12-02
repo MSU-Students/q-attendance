@@ -1,25 +1,11 @@
-/* src/services/attendanceService.ts
-   Firestore v9 modular SDK service for attendance reporting.
-*/
-
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  query,
-  where,
-  DocumentData
-} from "firebase/firestore";
-import type { Timestamp } from "firebase/firestore";
-
-const db = getFirestore();
+import { firebaseService } from './firebase-service';
 
 export type AttendanceRecord = {
   id?: string;
   studentId?: string;
   sessionId?: string;
-  timestamp?: Timestamp | string;
-  status?: "present" | "absent" | "late"; // strict, no redundant string
+  timestamp?: string | Date;
+  status?: 'present' | 'absent' | 'late' | 'check-in' | 'unknown';
   [k: string]: any;
 };
 
@@ -30,49 +16,92 @@ export type Student = {
   [k: string]: any;
 };
 
+/**
+ * Fetch students by class `section`.
+ * The app stores enrolled students inside `classes` documents, so we
+ * collect enrolled lists from classes matching the section.
+ */
 export async function fetchStudents(section?: string): Promise<Student[]> {
-  const col = collection(db, "students");
-  let q: any = col;
-
-  if (section && section !== "") {
-    q = query(col, where("section", "==", section));
+  if (!section) return [];
+  // find classes with this section
+  const classes = await firebaseService.findRecords('classes', undefined, [{ section: { '==': section } } as any]);
+  const students: Student[] = [];
+  for (const cls of classes as any[]) {
+    // enrolled students are stored as a subcollection 'enrolled' under the class
+    try {
+      const enrolled = await firebaseService.findRecords('enrolled', `/classes/${cls.key}`);
+      if (enrolled && Array.isArray(enrolled)) {
+        for (const s of enrolled as any[]) {
+          students.push({ id: s.key || s.id || s.ownerKey || '', name: s.fullName || s.name || '', section: cls.section });
+        }
+      }
+    } catch (err) {
+      // ignore and continue
+      console.error('Error loading enrolled for class', cls.key, err);
+    }
   }
 
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({
-    id: d.id,
-    ...(d.data() as DocumentData)
-  }));
+  return students;
 }
 
+/**
+ * Fetch attendance records (as flat list) for classes in the given section
+ * and optionally filtered by date range. This function reads `meetings`
+ * and the subcollection `check-ins` for each meeting.
+ */
 export async function fetchAttendanceRecords(opts?: {
-  section?: string | undefined;
+  section?: string;
   dateFrom?: Date | undefined;
   dateTo?: Date | undefined;
 }): Promise<AttendanceRecord[]> {
-  const { dateFrom, dateTo } = opts ?? {};
+  const { section, dateFrom, dateTo } = opts ?? {};
 
-  const col = collection(db, "attendance");
-  const snap = await getDocs(col);
+  // find classes for the section
+  const classes = section
+    ? (await firebaseService.findRecords('classes', undefined, [{ section: { '==': section } } as any]))
+    : (await firebaseService.findRecords('classes'));
 
-  const raw = snap.docs.map(d => ({
-    id: d.id,
-    ...(d.data() as AttendanceRecord)
-  }));
+  const classKeys = (classes as any[]).map((c) => c.key).filter(Boolean);
+  const results: AttendanceRecord[] = [];
 
-  const filtered = raw.filter(r => {
-    if (!r.timestamp) return true;
-    const tsDate = (r.timestamp as any).toDate
-      ? (r.timestamp as any).toDate()
-      : new Date(String(r.timestamp));
+  // for each class, load meetings and their check-ins
+  for (const ck of classKeys) {
+    const meetings = await firebaseService.findRecords('meetings', undefined, [{ classKey: { '==': ck } } as any]);
+    for (const m of meetings) {
+      // parse meeting date
+      let meetingDate: Date | undefined;
+      if (m.date) {
+        try {
+          // support formats like YYYY/MM/DD HH:mm and YYYY-MM-DD HH:mm
+          const normalized = String(m.date).replace(/\//g, '-');
+          meetingDate = new Date(normalized);
+          if (isNaN(meetingDate.getTime())) meetingDate = undefined;
+        } catch {
+          meetingDate = undefined;
+        }
+      }
 
-    if (dateFrom && tsDate < dateFrom) return false;
-    if (dateTo && tsDate > dateTo) return false;
+      if (dateFrom && meetingDate && meetingDate < dateFrom) continue;
+      if (dateTo && meetingDate && meetingDate > dateTo) continue;
 
-    return true;
-  });
+      if (!m.key) continue;
 
-  return filtered;
+      const checkIns = await firebaseService.findRecords('check-ins', `/meetings/${m.key}`);
+      for (const ci of checkIns as any[]) {
+        results.push({
+          id: ci.key || ci.id,
+          studentId: ci.key,
+          sessionId: m.key,
+          timestamp: ci.checkInTime,
+          status: ci.status || 'unknown',
+          meetingDate: m.date,
+          classKey: m.classKey,
+        });
+      }
+    }
+  }
+
+  return results;
 }
 
 export type StudentSummary = {
@@ -107,14 +136,12 @@ export function computeSummaries(
     const sid = r.studentId ?? "";
     if (!sid) continue;
 
-    const stored =
-      map.get(sid) ??
-      {
-        present: 0,
-        absent: 0,
-        late: 0,
-        sessions: new Set<string>()
-      };
+    const stored = map.get(sid) ?? {
+      present: 0,
+      absent: 0,
+      late: 0,
+      sessions: new Set<string>()
+    };
 
     const sess = r.sessionId ?? r.id ?? "__unknown_session__";
     stored.sessions.add(sess);
@@ -129,14 +156,12 @@ export function computeSummaries(
   const out: StudentSummary[] = [];
 
   for (const s of students) {
-    const stats =
-      map.get(s.id) ??
-      {
-        present: 0,
-        absent: 0,
-        late: 0,
-        sessions: new Set<string>()
-      };
+    const stats = map.get(s.id) ?? {
+      present: 0,
+      absent: 0,
+      late: 0,
+      sessions: new Set<string>()
+    };
 
     const total = stats.sessions.size;
     const percent = total === 0 ? 0 : (stats.present / total) * 100;

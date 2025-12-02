@@ -1,3 +1,8 @@
 {
-  "extends": "./.quasar/tsconfig.json"
+  "extends": "./.quasar/tsconfig.json",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "strict": true,
+    "moduleResolution": "node"
+  }
 }
