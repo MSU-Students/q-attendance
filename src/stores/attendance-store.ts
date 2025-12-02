@@ -23,7 +23,7 @@ export const useAttendanceStore = defineStore('attendance', {
 
   },
   actions: {
-    _validationSchedulerId: 0 as number | undefined,
+    _validationSchedulerId: undefined as number | undefined,
 
     startValidationScheduler(intervalMs: number = 10 * 60 * 1000) {
       if (this._validationSchedulerId) return;
@@ -39,7 +39,7 @@ export const useAttendanceStore = defineStore('attendance', {
         } catch (err) {
           console.error('Validation scheduler error', err);
         }
-      }, intervalMs);
+      }, intervalMs) as unknown as number;
     },
 
     stopValidationScheduler() {
@@ -135,7 +135,7 @@ export const useAttendanceStore = defineStore('attendance', {
       student: string;
       meeting: ClassMeetingModel,
       status: MeetingCheckInModel['status'],
-      location?: { lat: number; lng: number }
+      location?: { lat: number; lng: number } | undefined
     }) {
       try {
         const persistentStore = usePersistentStore();
@@ -144,8 +144,8 @@ export const useAttendanceStore = defineStore('attendance', {
           key: payload.student,
           checkInTime: checkInTime,
           status: payload.status || 'check-in',
-          validation: { status: 'unverified' }
-          ,location: payload.location
+          validation: { status: 'unverified' },
+          location: payload.location,
         };
         await Promise.all([
           persistentStore.createRecord('check-ins',
@@ -186,6 +186,7 @@ export const useAttendanceStore = defineStore('attendance', {
         for (const rec of targets) {
           const checkInTime = new Date(rec.checkInTime || '');
           // Haversine distance check
+          let status: MeetingCheckInModel['validation'] = { status: 'valid' as const };
           if (meeting.location && rec.location) {
             const distanceMeters = haversineDistanceMeters(meeting.location.lat, meeting.location.lng, rec.location.lat, rec.location.lng);
             // Define threshold (meters)
@@ -194,7 +195,6 @@ export const useAttendanceStore = defineStore('attendance', {
               status = { status: 'invalid', reason: `Check-in too far from meeting location (${Math.round(distanceMeters)}m)` };
             }
           }
-          let status: MeetingCheckInModel['validation'] = { status: 'valid' as const };
           if (!rec.checkInTime) {
             status = { status: 'invalid', reason: 'No check-in time recorded' };
           } else if (rec.status === 'absent') {
@@ -209,9 +209,14 @@ export const useAttendanceStore = defineStore('attendance', {
 
           // Update validation and append to history
           const now = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
-          const historyEntry = { status: status.status, reason: status.reason, by: 'system', date: now };
+          const historyEntry = { status: status.status, reason: status.reason!, by: 'system', date: now };
           const existingHistory = rec.validationHistory || [];
-          existingHistory.push(historyEntry);
+          existingHistory.push({
+            ...historyEntry,
+            date: now,
+            status: 'unverified',
+
+          });
           await persistentStore.updateRecord('check-ins', rec.key, { validation: status, validationHistory: existingHistory }, `/meetings/${meetingKey}`);
         }
         return true;
@@ -280,7 +285,12 @@ export const useAttendanceStore = defineStore('attendance', {
         const now = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
         const history = existing.validationHistory || [];
         history.push({ status: payload.status, reason: payload.reason, by: payload.by || 'teacher', date: now });
-        await persistentStore.updateRecord('check-ins', payload.checkInKey, { validation: { status: payload.status, reason: payload.reason }, validationHistory: history }, path);
+        await persistentStore.updateRecord('check-ins', payload.checkInKey, {
+          validation: {
+            status: payload.status, reason: payload.reason!
+          },
+          validationHistory: history
+        }, path);
         return true;
       } catch (err) {
         console.error('Error updating check-in validation override:', err);
