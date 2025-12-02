@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.16.4",
-    "@rolldown/pluginutils": "^1.0.0-beta.52",
     "apexcharts": "^4.5.0",
     "axios": "^1.2.1",
     "dexie": "^4.2.1",
