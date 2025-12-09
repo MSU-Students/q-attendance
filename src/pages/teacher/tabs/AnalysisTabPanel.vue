@@ -4,6 +4,7 @@ import { ClassMeetingModel } from 'src/models/attendance.models';
 import { useAttendanceStore } from 'src/stores/attendance-store';
 import { computed, ref, onUnmounted } from 'vue';
 import { calculateStudentAttendance } from 'src/utils/attendance-utils';
+import StudentAttendanceCharts from 'src/components/StudentAttendanceCharts.vue';
 
 const props = defineProps<{
   name: string;
@@ -130,6 +131,15 @@ const attendanceStats = computed(() => {
         </q-card>
       </div>
     </div>
+
+    <!-- Charts -->
+    <student-attendance-charts
+      :student-stats="attendanceStats.studentStats"
+      :total-present="attendanceStats.totalPresent"
+      :total-absent="attendanceStats.totalAbsent"
+      :total-late="attendanceStats.totalLate"
+      :average-attendance-rate="attendanceStats.averageAttendanceRate"
+    />
 
     <!-- Student Attendance Details Table -->
     <q-card>
