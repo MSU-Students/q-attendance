@@ -22,9 +22,8 @@ const linksList: EssentialLinkProps[] = [
 ];
 
 onMounted(async () => {
-  const studentAccount = authStore.studentAccount;
-  if (studentAccount) {
-    await classStore.loadUserClasses(studentAccount.ownerKey);
+  if (authStore.currentAccount?.key) {
+    await classStore.loadUserClasses(authStore.currentAccount.key);
   }
 });
 
@@ -49,8 +48,8 @@ function openEnrollDialog() {
             <q-toolbar-title class="q-ml-sm username-title">
               <span class="greeting">Hi, </span>
               <span class="name">{{
-                authStore.currentUser?.displayName
-                  ? authStore.currentUser?.displayName.split(' ')[0]
+                authStore.currentAccount?.fullName
+                  ? authStore.currentAccount?.fullName.split(' ')[0]
                   : ''
               }}</span>
             </q-toolbar-title>
@@ -73,7 +72,7 @@ function openEnrollDialog() {
             <q-btn flat round class="avatar-btn">
               <q-avatar size="32px">
                 <img
-                  :src="authStore.currentUser?.photoURL || 'https://cdn.quasar.dev/img/avatar.png'"
+                  :src="authStore.currentAccount?.avatar || 'https://cdn.quasar.dev/img/avatar.png'"
                 />
               </q-avatar>
               <q-menu anchor="bottom right" self="top right">
@@ -83,7 +82,7 @@ function openEnrollDialog() {
                       <q-avatar>
                         <img
                           :src="
-                            authStore.currentUser?.photoURL ||
+                            authStore.currentAccount?.avatar ||
                             'https://cdn.quasar.dev/img/avatar.png'
                           "
                         />
@@ -91,10 +90,10 @@ function openEnrollDialog() {
                     </q-item-section>
                     <q-item-section>
                       <q-item-label class="ellipsis">{{
-                        authStore.currentUser?.displayName
+                        authStore.currentAccount?.fullName
                       }}</q-item-label>
                       <q-item-label caption class="ellipsis">{{
-                        authStore.currentUser?.email
+                        authStore.currentAccount?.email
                       }}</q-item-label>
                     </q-item-section>
                   </q-item>
@@ -121,11 +120,9 @@ function openEnrollDialog() {
       <div class="drawer-content">
         <div class="drawer-header q-px-md q-py-sm">
           <div class="row items-center no-wrap">
-            <q-btn :to="{ name: 'home' }" dense flat>
-              <q-icon size="28px" class="q-mr-sm">
-                <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
-              </q-icon>
-            </q-btn>
+            <q-icon size="28px" class="q-mr-sm">
+              <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
+            </q-icon>
             <div class="text-subtitle1 text-weight-bold">Q-Class Attendance</div>
           </div>
         </div>

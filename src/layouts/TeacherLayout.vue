@@ -15,8 +15,8 @@ const miniState = ref(false);
 const router = useRouter();
 
 onMounted(async () => {
-  if (authStore.isUserTeacher) {
-    await classStore.loadUserClasses(authStore.teacherAccount!.ownerKey);
+  if (authStore.currentAccount?.key) {
+    await classStore.loadUserClasses(authStore.currentAccount.key);
   }
 });
 
@@ -53,8 +53,8 @@ function openCreateClassDialog() {
         <q-toolbar-title class="ellipsis">
           <span class="greeting">Hi,</span>
           {{
-            authStore.currentUser?.displayName
-              ? authStore.currentUser?.displayName.split(' ')[0]
+            authStore.currentAccount?.fullName
+              ? authStore.currentAccount?.fullName.split(' ')[0]
               : ''
           }}!
         </q-toolbar-title>
@@ -65,7 +65,7 @@ function openCreateClassDialog() {
           <q-btn flat round class="avatar-btn">
             <q-avatar size="32px">
               <img
-                :src="authStore.currentUser?.photoURL || 'https://cdn.quasar.dev/img/avatar.png'"
+                :src="authStore.currentAccount?.avatar || 'https://cdn.quasar.dev/img/avatar.png'"
               />
             </q-avatar>
             <q-menu>
@@ -91,11 +91,9 @@ function openCreateClassDialog() {
         <q-card style="padding-top: 1rem">
           <q-card-section>
             <div class="flex items-center gap-2">
-              <q-btn dense flat :to="{ name: 'home' }">
-                <q-icon size="2rem" class="self-center">
-                  <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
-                </q-icon>
-              </q-btn>
+              <q-icon size="2rem" class="self-center">
+                <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
+              </q-icon>
               <div v-if="!miniState" style="font-size: 1.4rem; margin-left: 0.5rem">
                 <strong>Q-Class Attendance</strong>
               </div>

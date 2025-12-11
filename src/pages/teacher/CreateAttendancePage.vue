@@ -17,7 +17,6 @@ const authStore = useAuthStore();
 const attendanceDate = ref(date.formatDate(new Date(), 'YYYY/MM/DD'));
 const attendanceTime = ref(date.formatDate(new Date(), 'HH:mm'));
 const attendanceStatus = ref<ClassMeetingModel['status']>('open');
-const meetingLocation = ref<{ lat: number; lng: number } | null>(null);
 const isSubmitting = ref(false);
 const existingMeetingFound = ref(false);
 
@@ -31,7 +30,7 @@ const activeClass = computed(() => {
 const currentClass = ref<ClassModel>();
 
 const currentTeacher = computed(() => {
-  return authStore.teacherAccount;
+  return authStore.currentAccount;
 });
 
 const formattedDateTime = computed(() => {
@@ -96,7 +95,6 @@ const createAttendanceRecord = async () => {
       status: attendanceStatus.value,
       teacher: currentTeacher.value?.key || '',
       checkIns: [],
-      location: meetingLocation.value || undefined,
     };
 
     await attendanceStore.newClassMeeting(newMeeting);
@@ -126,21 +124,6 @@ const createAttendanceRecord = async () => {
     isSubmitting.value = false;
   }
 };
-
-async function useMyLocation() {
-  try {
-    if (!navigator.geolocation) {
-      Notify.create({ message: 'Geolocation is not supported by your browser', color: 'negative' });
-      return;
-    }
-    const pos = await new Promise<GeolocationPosition>((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 5000 }));
-    meetingLocation.value = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-    Notify.create({ message: 'Meeting location set', color: 'positive' });
-  } catch (err) {
-    console.error('Error getting location', err);
-    Notify.create({ message: 'Failed to get location', color: 'negative' });
-  }
-}
 
 const cancelAndGoBack = () => {
   void router.push({
@@ -211,14 +194,6 @@ const cancelAndGoBack = () => {
               </div>
 
               <div class="col-12">
-                <div class="row q-col-gutter-md items-center">
-                  <div class="col-6">
-                    <q-btn label="Use My Location" color="secondary" @click="useMyLocation" />
-                  </div>
-                  <div class="col-6 text-right">
-                    <div v-if="meetingLocation">Location: {{ meetingLocation?.lat.toFixed(5) }}, {{ meetingLocation?.lng.toFixed(5) }}</div>
-                  </div>
-                </div>
                 <q-select
                   filled
                   v-model="attendanceStatus"

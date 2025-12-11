@@ -12,9 +12,8 @@ defineProps<{
   name: string;
   meetings: ClassMeetingModel[];
 }>();
-const emit = defineEmits(['checkedIn']);
 const currentStudent = computed(() => {
-  return authStore.studentAccount;
+  return authStore.currentAccount;
 });
 const isCheckingIn = ref(false);
 async function checkInToSession(meeting: ClassMeetingModel) {
@@ -43,24 +42,10 @@ async function checkInToSession(meeting: ClassMeetingModel) {
 
   isCheckingIn.value = true;
   try {
-    let location: { lat: number; lng: number } | undefined = undefined;
-    try {
-      if (navigator.geolocation) {
-        location = await new Promise<{ lat: number; lng: number }>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition((pos) => {
-            resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-          }, (err) => reject(new Error(err?.message || 'Geolocation error')), { enableHighAccuracy: true, timeout: 5000 });
-        });
-      }
-    } catch (err) {
-      console.warn('Geolocation not available or permission denied', err);
-      location = undefined;
-    }
     await attendanceStore.checkInAttendance({
-      student: currentStudent.value.ownerKey,
+      student: currentStudent.value.key,
       meeting: meeting,
       status: 'check-in',
-      location
     });
 
     Notify.create({
@@ -71,7 +56,6 @@ async function checkInToSession(meeting: ClassMeetingModel) {
       position: 'top',
       timeout: 5000,
     });
-    emit('checkedIn');
   } catch (error) {
     console.error('Error checking in:', error);
     Notify.create({

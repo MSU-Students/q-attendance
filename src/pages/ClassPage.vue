@@ -15,7 +15,7 @@ function addNewClass() {
   showNewClassDialog.value = true;
 }
 async function saveClass() {
-  if (authStore.teacherAccount) {
+  if (authStore.currentAccount) {
     await classStore.saveClass(
       {
         key: uid(),
@@ -24,7 +24,7 @@ async function saveClass() {
         classCode: 'ABCD',
         section: 'XY',
       },
-      authStore.teacherAccount,
+      authStore.currentAccount,
     );
     className.value = '';
     showNewClassDialog.value = false;

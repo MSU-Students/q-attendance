@@ -11,12 +11,14 @@ const username = ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const fullName = ref('');
+const askRole = ref(false);
+const registerWithGoogle = ref(false);
 const isPwd = ref(true);
 const isConfirmPwd = ref(true);
 const loading = ref(false);
 const termsAccepted = ref(false);
 
-async function onSubmit() {
+function onSubmit() {
   if (!fullName.value || !username.value || !password.value) {
     Notify.create({
       message: 'Please fill in all required fields',
@@ -46,14 +48,22 @@ async function onSubmit() {
     });
     return;
   }
-  await register();
+
+  askRole.value = true;
 }
 
-async function register() {
+async function register(role: string) {
   loading.value = true;
   try {
-    await authStore.register(username.value, password.value, fullName.value);
-    await router.replace({ name: 'home' });
+    if (!registerWithGoogle.value) {
+      await authStore.register(username.value, password.value, fullName.value, role);
+      console.log('role', role);
+      await router.replace({ name: `${role}` });
+    } else {
+      const user = await authStore.authorizeUser('', role);
+      console.log('role', user?.role);
+      await router.replace({ name: `${user?.role}` });
+    }
   } catch {
     Notify.create({
       message: 'Registration failed. Please try again.',
@@ -69,8 +79,15 @@ async function register() {
 async function continueWithGoogle() {
   loading.value = true;
   try {
-    await authStore.loginWithGoogle();
-    await router.replace({ name: 'home' });
+    const user = await authStore.loginWithGoogle();
+
+    if (user) {
+      askRole.value = true;
+      registerWithGoogle.value = true;
+    } else {
+      const user = await authStore.authorizeUser();
+      await router.replace({ name: `${user?.role}` });
+    }
   } catch {
     Notify.create({
       message: 'Google login failed. Please try again.',
@@ -84,9 +101,7 @@ async function continueWithGoogle() {
 }
 
 function goToLogin() {
-  void router.push({
-    name: 'login',
-  });
+  void router.push('/auth/login');
 }
 </script>
 
@@ -109,7 +124,7 @@ function goToLogin() {
 
       <!-- Right side with registration form -->
       <div class="register-form-container">
-        <div class="register-form">
+        <div v-if="!askRole" class="register-form">
           <h2 class="form-title">Create Account</h2>
           <p class="form-subtitle">Please fill in the details to register</p>
 
@@ -229,6 +244,57 @@ function goToLogin() {
               Already have an account? <a @click="goToLogin" class="login-link">Sign in</a>
             </div>
           </q-form>
+        </div>
+
+        <div v-else class="role-selection">
+          <h2 class="form-title">Select Your Role</h2>
+          <p class="form-subtitle">Please select your role to continue</p>
+
+          <div class="role-buttons q-gutter-y-md">
+            <q-btn
+              @click="register('student')"
+              class="role-btn"
+              :loading="loading"
+              unelevated
+              no-caps
+            >
+              <q-icon name="school" class="q-mr-sm" />
+              Student
+            </q-btn>
+
+            <q-btn
+              @click="register('teacher')"
+              class="role-btn"
+              :loading="loading"
+              unelevated
+              no-caps
+            >
+              <q-icon name="assignment_ind" class="q-mr-sm" />
+              Teacher
+            </q-btn>
+
+            <q-btn
+              @click="register('supervisor')"
+              class="role-btn"
+              :loading="loading"
+              unelevated
+              no-caps
+            >
+              <q-icon name="supervisor_account" class="q-mr-sm" />
+              Supervisor
+            </q-btn>
+
+            <q-btn
+              @click="register('admin')"
+              class="role-btn"
+              :loading="loading"
+              unelevated
+              no-caps
+            >
+              <q-icon name="admin_panel_settings" class="q-mr-sm" />
+              Administrator
+            </q-btn>
+          </div>
         </div>
       </div>
     </div>

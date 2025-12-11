@@ -8,11 +8,11 @@ const props = defineProps<{
 }>();
 const authStore = useAuthStore();
 const currentStudent = computed(() => {
-  return authStore.studentAccount;
+  return authStore.currentAccount;
 });
 const classMeetingHistory = computed(() => {
   return props.meetings.reduce((all, meeting) => {
-    all.push(...(meeting.checkIns || []).filter((c) => c.key == currentStudent.value?.ownerKey));
+    all.push(...(meeting.checkIns || []).filter((c) => c.key == currentStudent.value?.key));
     return all;
   }, [] as MeetingCheckInModel[]);
 });

@@ -77,7 +77,6 @@ const studentsWithStatus = computed(() => {
     const checkIn = studentCheckIns.value.find((c) => c.key === studentKey);
     return {
       key: studentKey,
-      validation: checkIn?.validation || { status: 'unverified' },
       name: student.fullName || 'Unknown Student',
       email: student.email || '',
       avatar: student.avatar,
@@ -205,43 +204,6 @@ async function saveRollCall(isSubmit: boolean = false) {
   }
   isSubmitting.value = false;
 }
-async function overrideValidationForRow(row: ClassMeetingModel) {
-  try {
-    const reason = await new Promise((resolve) => {
-      const d = Dialog.create({
-        title: 'Override Validation',
-        prompt: { model: '', type: 'text' },
-        ok: { label: 'Next' },
-        cancel: true,
-      });
-      d.onOk((val) => resolve(val));
-      d.onCancel(() => resolve(null));
-    });
-    if (reason === null) return;
-    const confirmed = await new Promise((resolve) => {
-      const d2 = Dialog.create({
-        title: 'Select Validation',
-        message: 'Choose the validation status for this check-in',
-        ok: { label: 'Valid', color: 'green' },
-        cancel: { label: 'Invalid', color: 'red' },
-      });
-      d2.onOk(() => resolve(true));
-      d2.onCancel(() => resolve(false));
-    });
-    const status = confirmed ? 'valid' : 'invalid';
-    await attendanceStore.updateCheckInValidation({
-      meetingKey: currentMeeting.value?.key || '',
-      checkInKey: row.key,
-      status,
-      reason: reason as string,
-    });
-    currentMeeting.value = await attendanceStore.loadMeeting(currentMeeting.value?.key || '');
-    Notify.create({ message: 'Override applied' });
-  } catch (err) {
-    console.error('Override failed', err);
-    Notify.create({ message: 'Override failed', color: 'negative' });
-  }
-}
 function cancelRollCall() {
   void router.push({
     name: 'teacherClass',
@@ -256,25 +218,29 @@ const currentStudent = ref<UserModel>();
 const currentCheckIn = ref<MeetingCheckInModel>();
 function selectNextStudent() {
   let nextIndex = 0;
-
-  // Find starting point
-  if (currentStudent.value) {
+  if (!currentStudent.value && enrolledStudents.value.length) {
+    nextIndex = 0;
+  } else if (enrolledStudents.value.length && currentStudent.value) {
     nextIndex = enrolledStudents.value.findIndex((s) => s.key == currentStudent.value?.key) + 1;
   }
-
-  // Get next student in sequence
-  if (nextIndex < enrolledStudents.value.length) {
+  currentStudent.value = undefined;
+  while (
+    nextIndex >= 0 &&
+    nextIndex < enrolledStudents.value.length &&
+    (currentCheckIn.value?.status != 'check-in' || !currentStudent.value)
+  ) {
     const student = enrolledStudents.value[nextIndex];
     if (student) {
-      currentStudent.value = { ...student };
+      currentStudent.value = {
+        ...student,
+      };
       currentCheckIn.value = studentCheckIns.value.find((c) => c.key == student.key);
     } else {
       currentStudent.value = undefined;
-      showDialog.value = false;
     }
-  } else {
-    // No more students
-    currentStudent.value = undefined;
+    nextIndex++;
+  }
+  if (!currentStudent.value) {
     showDialog.value = false;
   }
 }
@@ -340,7 +306,6 @@ function startRollCall() {
               { name: 'name', label: 'Student Name', field: 'name', align: 'left', sortable: true },
               { name: 'checkInTime', label: 'Check-in Time', field: 'checkInTime', align: 'left' },
               { name: 'status', label: 'Status', field: 'status', align: 'center' },
-              { name: 'validation', label: 'Validation', field: 'validation', align: 'center' },
             ]"
             row-key="key"
             :pagination="{ rowsPerPage: 0 }"
@@ -368,37 +333,6 @@ function startRollCall() {
                     { label: 'Absent', value: 'absent', color: 'red' },
                   ]"
                   @update:model-value="updateStudentStatus(props.row.key, $event)"
-                />
-              </q-td>
-            </template>
-            <template v-slot:body-cell-validation="props">
-              <q-td :props="props" class="q-gutter-sm">
-                <q-badge
-                  :color="
-                    props.row.validation?.status === 'valid'
-                      ? 'green'
-                      : props.row.validation?.status === 'invalid'
-                        ? 'red'
-                        : 'grey'
-                  "
-                >
-                  {{ props.row.validation?.status || 'unverified' }}
-                </q-badge>
-                <q-btn
-                  flat
-                  small
-                  dense
-                  icon="replay"
-                  @click.stop.prevent="
-                    attendanceStore.validateCheckIn(currentMeeting.key, props.row.key)
-                  "
-                />
-                <q-btn
-                  flat
-                  small
-                  dense
-                  icon="edit"
-                  @click.stop.prevent="overrideValidationForRow(props.row)"
                 />
               </q-td>
             </template>

@@ -9,6 +9,7 @@ const router = useRouter();
 
 const username = ref('');
 const password = ref('');
+const askRole = ref(false);
 const isPwd = ref(true);
 const loading = ref(false);
 const rememberMe = ref(false);
@@ -28,7 +29,7 @@ async function onSubmit() {
   try {
     const auth = await authStore.login(username.value, password.value);
     if (auth) {
-      await router.replace({ name: 'home' });
+      await router.replace({ name: `${authStore.currentAccount?.role}` });
     } else {
       Notify.create({
         message: 'Invalid credentials. Please try again.',
@@ -52,10 +53,13 @@ async function onSubmit() {
 async function continueWithGoogle() {
   loading.value = true;
   try {
-    await authStore.loginWithGoogle();
-    await router.replace({
-      name: 'home',
-    });
+    const user = await authStore.loginWithGoogle();
+    if (user) {
+      askRole.value = true;
+    } else {
+      const user = await authStore.authorizeUser();
+      await router.replace({ name: `${user?.role}` });
+    }
   } catch {
     Notify.create({
       message: 'Google login failed. Please try again.',
@@ -68,21 +72,25 @@ async function continueWithGoogle() {
   }
 }
 
-function goToRegister() {
-  void router.push({
-    name: 'register',
-  });
-}
-async function forgetPassword() {
-  if (username.value) {
-    await authStore.sendForgetPassword(username.value);
+async function registerWithGoogle(role: string) {
+  loading.value = true;
+  try {
+    await authStore.authorizeUser('', role);
+    await router.replace({ name: `${authStore.currentAccount?.role}` });
+  } catch {
     Notify.create({
-      message: 'Email Sent',
-      color: 'info',
-      icon: 'info',
+      message: 'Registration failed. Please try again.',
+      color: 'negative',
+      icon: 'error',
       position: 'top',
     });
+  } finally {
+    loading.value = false;
   }
+}
+
+function goToRegister() {
+  void router.push('/auth/register');
 }
 </script>
 
@@ -105,7 +113,7 @@ async function forgetPassword() {
 
       <!-- Right side with login form -->
       <div class="login-form-container">
-        <div class="login-form">
+        <div v-if="!askRole" class="login-form">
           <h2 class="form-title">Sign In</h2>
           <p class="form-subtitle">Please enter your credentials to proceed</p>
 
@@ -153,7 +161,7 @@ async function forgetPassword() {
 
             <div class="options-row">
               <q-checkbox v-model="rememberMe" label="Remember me" dense color="primary" />
-              <a @click="forgetPassword" class="forgot-password cursor-pointer">Forgot password?</a>
+              <a href="#" class="forgot-password">Forgot password?</a>
             </div>
 
             <q-btn type="submit" class="submit-btn" :loading="loading" unelevated no-caps>
@@ -181,6 +189,57 @@ async function forgetPassword() {
               Don't have an account? <a @click="goToRegister" class="signup-link">Sign up</a>
             </div>
           </q-form>
+        </div>
+
+        <div v-else class="role-selection">
+          <h2 class="form-title">Select Your Role</h2>
+          <p class="form-subtitle">Please select your role to continue</p>
+
+          <div class="role-buttons q-gutter-y-md">
+            <q-btn
+              @click="registerWithGoogle('student')"
+              class="role-btn"
+              :loading="loading"
+              unelevated
+              no-caps
+            >
+              <q-icon name="school" class="q-mr-sm" />
+              Student
+            </q-btn>
+
+            <q-btn
+              @click="registerWithGoogle('teacher')"
+              class="role-btn"
+              :loading="loading"
+              unelevated
+              no-caps
+            >
+              <q-icon name="assignment_ind" class="q-mr-sm" />
+              Teacher
+            </q-btn>
+
+            <q-btn
+              @click="registerWithGoogle('supervisor')"
+              class="role-btn"
+              :loading="loading"
+              unelevated
+              no-caps
+            >
+              <q-icon name="supervisor_account" class="q-mr-sm" />
+              Supervisor
+            </q-btn>
+
+            <q-btn
+              @click="registerWithGoogle('admin')"
+              class="role-btn"
+              :loading="loading"
+              unelevated
+              no-caps
+            >
+              <q-icon name="admin_panel_settings" class="q-mr-sm" />
+              Administrator
+            </q-btn>
+          </div>
         </div>
       </div>
     </div>

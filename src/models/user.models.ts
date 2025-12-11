@@ -1,7 +1,6 @@
 import { Entity } from './base.model';
 
 export interface UserModel extends Entity {
-  ownerKey: string;
   fullName: string;
   email: string;
   emailVerified?: boolean;

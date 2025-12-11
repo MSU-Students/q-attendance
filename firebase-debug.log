@@ -1,0 +1,15 @@
+[debug] [2025-12-09T14:08:59.293Z] ----------------------------------------------------------------------
+[debug] [2025-12-09T14:08:59.298Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\msu-wone\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js login
+[debug] [2025-12-09T14:08:59.299Z] CLI Version:   14.27.0
+[debug] [2025-12-09T14:08:59.299Z] Platform:      win32
+[debug] [2025-12-09T14:08:59.299Z] Node Version:  v24.11.0
+[debug] [2025-12-09T14:08:59.299Z] Time:          Tue Dec 09 2025 06:08:59 GMT-0800 (Pacific Standard Time)
+[debug] [2025-12-09T14:08:59.300Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-12-09T14:08:59.302Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[info] i  The Firebase CLI’s MCP server feature can optionally make use of Gemini in Firebase. Learn more about Gemini in Firebase and how it uses your data: https://firebase.google.com/docs/gemini-in-firebase#how-gemini-in-firebase-uses-your-data 
+[debug] [2025-12-09T14:08:59.595Z] *** [apiv2] error from fetch(https://firebase-public.firebaseio.com/cli.json, {"headers":{},"method":"GET"}): FetchError: request to https://firebase-public.firebaseio.com/cli.json failed, reason: getaddrinfo ENOTFOUND firebase-public.firebaseio.com
+[warn] !  Unable to fetch the CLI MOTD and remote config. This is not a fatal error, but may indicate an issue with your network connection. 
+[debug] [2025-12-09T14:08:59.597Z] Failed to fetch MOTD FirebaseError: Failed to make request to https://firebase-public.firebaseio.com/cli.json
+[info] 
+[info] i  Firebase optionally collects CLI and Emulator Suite usage and error reporting information to help improve our products. Data is collected in accordance with Google's privacy policy (https://policies.google.com/privacy) and is not used to identify you. 

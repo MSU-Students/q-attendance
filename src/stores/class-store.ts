@@ -1,7 +1,7 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import type { ClassModel } from 'src/models/class.models';
 import type { UserModel } from 'src/models/user.models';
-import { usePersistentStore } from './persistent-store';
+import { firebaseService } from 'src/services/firebase-service';
 
 interface IState {
   teaching: ClassModel[];
@@ -9,7 +9,6 @@ interface IState {
   enrolled: ClassModel[];
   archivedEnrolled: ClassModel[];
 }
-
 export const useClassStore = defineStore('Class', {
   state: () =>
     ({
@@ -23,17 +22,17 @@ export const useClassStore = defineStore('Class', {
 
   actions: {
     async loadUserClasses(userKey: string, loadArchived?: boolean) {
-      const persistentStore = usePersistentStore();
-      const classKeeping = await persistentStore.getRecord('class-keepings', userKey);
+      const classKeeping = await firebaseService.getRecord('class-keepings', userKey);
       if (classKeeping) {
         const classKeys = [...classKeeping.enrolled, ...classKeeping.teaching];
         if (loadArchived) {
           //TODO:limit size
           classKeys.push(...classKeeping.archivedEnrolled, ...classKeeping.archivedTeaching);
         }
-        const classes = await persistentStore.findRecords('classes', undefined, {
+        const classes = await firebaseService.findRecords('classes', undefined, {
           key: { in: classKeys },
         });
+        console.log(classes.filter((cls) => classKeeping.enrolled.includes(cls.key)));
         this.enrolled = classes.filter((cls) => classKeeping.enrolled.includes(cls.key));
         this.teaching = classes.filter((cls) => classKeeping.teaching.includes(cls.key));
         this.archivedEnrolled = classes.filter((cls) =>
@@ -43,7 +42,7 @@ export const useClassStore = defineStore('Class', {
           classKeeping.archivedTeaching.includes(cls.key),
         );
       } else {
-        await persistentStore.createRecord('class-keepings', {
+        await firebaseService.createRecord('class-keepings', {
           key: userKey,
           enrolled: [],
           teaching: [],
@@ -58,19 +57,17 @@ export const useClassStore = defineStore('Class', {
     },
 
     async findClassByCode(classCode: string) {
-      const persistentStore = usePersistentStore();
-      const records = await persistentStore.findRecords('classes', undefined, {
+      const records = await firebaseService.findRecords('classes', undefined, {
         classCode: { '==': classCode },
       });
       const foundClass = records.find((record) => record.classCode === classCode);
       return foundClass;
     },
     async loadClass(key: string) {
-      const persistentStore = usePersistentStore();
       const [record, enrolled, teachers] = await Promise.all([
-        persistentStore.getRecord('classes', key),
-        persistentStore.findRecords('enrolled', `/classes/${key}`),
-        persistentStore.findRecords('teachers', `/classes/${key}`),
+        firebaseService.getRecord('classes', key),
+        firebaseService.findRecords('enrolled', `/classes/${key}`),
+        firebaseService.findRecords('teachers', `/classes/${key}`),
       ]);
       if (record) {
         record.enrolled = enrolled;
@@ -79,14 +76,12 @@ export const useClassStore = defineStore('Class', {
       }
     },
     async deleteClass(key: string) {
-      const persistentStore = usePersistentStore();
-      await persistentStore.deleteRecord('classes', key);
+      await firebaseService.deleteRecord('classes', key);
       this.teaching = this.teaching.filter((c) => c.key !== key);
     },
 
     async saveClass(payload: ClassModel, teacher: UserModel) {
-      const persistentStore = usePersistentStore();
-      const record = await persistentStore.createRecord('classes', {
+      const record = await firebaseService.createRecord('classes', {
         ...payload,
         teachers: undefined,
         enrolled: undefined,
@@ -101,45 +96,36 @@ export const useClassStore = defineStore('Class', {
     },
 
     async enroll(payload: { class: ClassModel; student: UserModel }) {
-      const persistentStore = usePersistentStore();
       const [student, cls] = await Promise.all([
-        persistentStore.createRecord('enrolled', {
-          ...payload.student,
-          key: payload.student.ownerKey,
-        }, `/classes/${payload.class.key}`),
-        persistentStore.getRecord('classes', payload.class.key),
+        firebaseService.createRecord('enrolled', payload.student, `/classes/${payload.class.key}`),
+        firebaseService.getRecord('classes', payload.class.key),
       ]);
       if (student && cls) {
         cls.enrolled = cls.enrolled || [];
         cls.enrolled.push(student);
-        const keepings = await persistentStore.getRecord('class-keepings', payload.student.ownerKey);
-        await persistentStore.updateRecord('class-keepings', payload.student.ownerKey, {
+        const keepings = await firebaseService.getRecord('class-keepings', payload.student.key);
+        await firebaseService.updateRecord('class-keepings', payload.student.key, {
           enrolled: [...new Set([...(keepings?.enrolled || []), cls.key])],
         });
       }
     },
     async join(payload: { class: ClassModel; teacher: UserModel }) {
-      const persistentStore = usePersistentStore();
       const [teacher, cls] = await Promise.all([
-        persistentStore.createRecord('teachers', {
-          ...payload.teacher,
-          key: payload.teacher.ownerKey
-        }, `/classes/${payload.class.key}`),
-        persistentStore.getRecord('classes', payload.class.key),
+        firebaseService.createRecord('teachers', payload.teacher, `/classes/${payload.class.key}`),
+        firebaseService.getRecord('classes', payload.class.key),
       ]);
       if (teacher && cls) {
         cls.teachers = cls.teachers || [];
         cls.teachers.push(teacher);
-        const keepings = await persistentStore.getRecord('class-keepings', payload.teacher.ownerKey);
-        await persistentStore.updateRecord('class-keepings', payload.teacher.ownerKey, {
+        const keepings = await firebaseService.getRecord('class-keepings', payload.teacher.key);
+        await firebaseService.updateRecord('class-keepings', payload.teacher.key, {
           teaching: [...new Set([...(keepings?.teaching || []), cls.key])],
         });
       }
     },
 
-    async unEnroll(payload: { classKey: string; studentKey: string }) {
+    async unenroll(payload: { classKey: string; studentKey: string }) {
       try {
-        const persistentStore = usePersistentStore();
         const cls = await this.loadClass(payload.classKey);
 
         if (
@@ -151,7 +137,7 @@ export const useClassStore = defineStore('Class', {
           return false;
         }
 
-        await persistentStore.updateRecord(
+        await firebaseService.updateRecord(
           'enrolled',
           payload.studentKey,
           {
@@ -160,13 +146,13 @@ export const useClassStore = defineStore('Class', {
           `/classes/${payload.classKey}`,
         );
 
-        const keepings = await persistentStore.getRecord('class-keepings', payload.studentKey);
+        const keepings = await firebaseService.getRecord('class-keepings', payload.studentKey);
         if (keepings) {
           const updatedEnrolled = (keepings.enrolled || []).filter(
             (classKey: string) => classKey !== payload.classKey,
           );
 
-          await persistentStore.updateRecord('class-keepings', payload.studentKey, {
+          await firebaseService.updateRecord('class-keepings', payload.studentKey, {
             enrolled: updatedEnrolled,
           });
         }

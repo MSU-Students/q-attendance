@@ -39,7 +39,8 @@ const linksList: EssentialLinkProps[] = [
 ];
 
 onMounted(async () => {
-  if (authStore.isUserSupervisor) {
+  if (authStore.currentAccount?.key) {
+    // Load all classes for the supervisor to monitor
     await classStore.loadUserClasses('');
   }
 });
@@ -64,8 +65,8 @@ function signOff() {
             <q-toolbar-title class="text-primary q-ml-sm">
               Hi,
               {{
-                authStore.currentUser?.displayName
-                  ? authStore.currentUser?.displayName.split(' ')[0]
+                authStore.currentAccount?.fullName
+                  ? authStore.currentAccount?.fullName.split(' ')[0]
                   : ''
               }}
             </q-toolbar-title>
@@ -77,7 +78,7 @@ function signOff() {
             <q-btn flat round>
               <q-avatar size="32px">
                 <img
-                  :src="authStore.currentUser?.photoURL || 'https://cdn.quasar.dev/img/avatar.png'"
+                  :src="authStore.currentAccount?.avatar || 'https://cdn.quasar.dev/img/avatar.png'"
                 />
               </q-avatar>
               <q-menu>
@@ -87,15 +88,15 @@ function signOff() {
                       <q-avatar>
                         <img
                           :src="
-                            authStore.currentUser?.photoURL ||
+                            authStore.currentAccount?.avatar ||
                             'https://cdn.quasar.dev/img/avatar.png'
                           "
                         />
                       </q-avatar>
                     </q-item-section>
                     <q-item-section>
-                      <q-item-label>{{ authStore.currentUser?.displayName }}</q-item-label>
-                      <q-item-label caption>{{ authStore.currentUser?.email }}</q-item-label>
+                      <q-item-label>{{ authStore.currentAccount?.fullName }}</q-item-label>
+                      <q-item-label caption>{{ authStore.currentAccount?.email }}</q-item-label>
                     </q-item-section>
                   </q-item>
                   <q-separator />

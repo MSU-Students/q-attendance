@@ -4,8 +4,7 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   onAuthStateChanged, sendPasswordResetEmail,
-  signInWithEmailAndPassword, signInWithPopup, signOut, User,
-  updateProfile
+  signInWithEmailAndPassword, signInWithPopup, signOut, User
 } from "firebase/auth";
 import { getAuth } from "firebase/auth";
 import {
@@ -20,8 +19,10 @@ import {
   setDoc, where, WhereFilterOp,
   onSnapshot
 } from "firebase/firestore";
+import { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
 import { Entity } from 'src/models/base.model';
-import { CollectionName, CollectionTypes } from './collection.type';
+import { ClassKeepingModel, ClassModel } from 'src/models/class.models';
+import { UserModel } from 'src/models/user.models';
 
 function copyObject<T>(source: T) {
   return JSON.parse(JSON.stringify(source)) as T;
@@ -48,11 +49,21 @@ const googleProvider = new GoogleAuthProvider();
 // Initialize Cloud Firestore and get a reference to the service
 const db = getFirestore(app);
 
+type CollectionTypes = {
+  users: UserModel;
+  classes: ClassModel;
+  'teachers': UserModel;
+  'enrolled': UserModel;
+  meetings: ClassMeetingModel;
+  'check-ins': MeetingCheckInModel,
+  'class-keepings': ClassKeepingModel
+}
 
+type CollectionName = keyof CollectionTypes;
 type WhereArgs = Parameters<typeof where>;
 type Operand = Partial<Record<WhereFilterOp, WhereArgs[2]>>;
 type WhereCondition<T extends Entity> = Partial<Record<keyof T, Operand>>;
-export type Condition<T extends Entity> = WhereCondition<T>[] | WhereCondition<T>;
+type Condition<T extends Entity> = WhereCondition<T>[] | WhereCondition<T>;
 
 class FirebaseService {
   /**
@@ -67,11 +78,8 @@ class FirebaseService {
    * @param email
    * @param password
    */
-  async registerWithEmailPassword(email: string, password: string, displayName: string) {
+  async registerWithEmailPassword(email: string, password: string) {
     const credential = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(credential.user, {
-      displayName
-    })
     return credential.user;
   }
   /**
@@ -234,12 +242,10 @@ class FirebaseService {
     }
     return false;
   }
-
   getAndWhere<T extends Entity>(condition: WhereCondition<T>) {
     const andCon: QueryFieldFilterConstraint[] = [];
-    const cond = copyObject(condition);
-    for (const prop in cond) {
-      const con = cond[prop];
+    for (const prop in condition) {
+      const con = condition[prop];
       for (const op in con) {
         const operator = op as WhereFilterOp;
         const val = con?.[operator];
