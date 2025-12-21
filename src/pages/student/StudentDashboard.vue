@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { useClassStore } from 'src/stores/class-store';
+import { useKeepingStore } from 'src/stores/keeping-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Notify, Dialog, copyToClipboard } from 'quasar';
 import { ClassModel } from 'src/models/class.models';
+import { useClassStore } from 'src/stores/class-store';
 
 const classStore = useClassStore();
+const keepingStore = useKeepingStore();
 const authStore = useAuthStore();
 const router = useRouter();
 
@@ -16,7 +18,7 @@ const isLoading = ref(false);
 const codeError = ref('');
 
 const studentClasses = computed(() => {
-  return classStore.enrolled;
+  return keepingStore.enrolled;
 });
 
 const handleEnrollDialog = () => {
@@ -35,7 +37,7 @@ onUnmounted(() => {
 
 async function loadStudentClasses() {
   if (authStore.studentAccount) {
-    await classStore.loadUserClasses(authStore.studentAccount.ownerKey);
+    await keepingStore.loadUserKeeping(authStore.studentAccount.ownerKey);
   }
 }
 

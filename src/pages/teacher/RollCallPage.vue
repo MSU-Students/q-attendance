@@ -3,12 +3,14 @@ import { computed, onMounted, ref } from 'vue';
 import { date, Dialog, Notify } from 'quasar';
 import { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
 import { useAttendanceStore } from 'src/stores/attendance-store';
-import { useClassStore } from 'src/stores/class-store';
 import { useRoute, useRouter } from 'vue-router';
 import { ClassModel } from 'src/models/class.models';
 import RollCallDialog from './RollCallDialog.vue';
 import { UserModel } from 'src/models/user.models';
+import { useClassStore } from 'src/stores/class-store';
+
 type StudentKey = string;
+
 const route = useRoute();
 const router = useRouter();
 const attendanceStore = useAttendanceStore();

@@ -1,6 +1,8 @@
-import { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
-import { ClassModel, ClassKeepingModel } from 'src/models/class.models';
-import { UserModel } from 'src/models/user.models';
+import {
+  ClassMeetingModel,
+  ClassModel,
+  MeetingCheckInModel, OrgEventModel, OrgModel, RecordKeepingModel, UserModel
+} from 'src/models';
 
 export type CollectionTypes = {
   users: UserModel;
@@ -9,7 +11,12 @@ export type CollectionTypes = {
   'enrolled': UserModel;
   meetings: ClassMeetingModel;
   'check-ins': MeetingCheckInModel,
-  'class-keepings': ClassKeepingModel
+  'class-keepings': RecordKeepingModel,
+  'organizations': OrgModel,
+  'officers': UserModel,
+  'members': UserModel,
+  'org-events': OrgEventModel,
+  confirmations: MeetingCheckInModel,
 }
 
 export type CollectionName = keyof CollectionTypes;

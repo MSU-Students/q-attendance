@@ -11,11 +11,6 @@ export interface ClassMeetingModel extends Entity {
   latestCall?: string;
   checkInCount?: number;
 }
-export interface CheckInComments extends Entity {
-  msg: string,
-  from: string,
-  date: string
-}
 export interface MeetingCheckInModel extends Entity {
   checkInTime: string;
   status: 'check-in' | 'absent' | 'late' | 'present';
@@ -27,4 +22,21 @@ export interface MeetingCheckInModel extends Entity {
   };
   location?: { lat: number; lng: number } | undefined;
   validationHistory?: { status: 'valid' | 'invalid' | 'unverified'; reason?: string; by?: string; date: string }[];
+}
+export interface CheckInComments extends Entity {
+  msg: string,
+  from: string,
+  date: string
+}
+
+
+//Org Models
+export interface OrgEventModel extends Entity {
+  orgKey: string;
+  date: string;
+  status: 'open' | 'cancelled' | 'concluded';
+  organizer: string;
+  confirmations?: MeetingCheckInModel[] | undefined,
+  latestConfirmation?: string;
+  confirmationCount?: number;
 }
