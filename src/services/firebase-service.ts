@@ -23,7 +23,7 @@ import {
 import { Entity } from 'src/models/base.model';
 import { CollectionName, CollectionTypes } from './collection.type';
 
-function copyObject<T>(source: T) {
+export function copyObject<T>(source: T) {
   return JSON.parse(JSON.stringify(source)) as T;
 }
 

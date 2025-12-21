@@ -15,7 +15,14 @@ localDb.version(1).stores({
   'enrolled': '[path+key]',
   meetings: '&key, classKey, teacher, date, status',
   'check-ins': '[path+key], status',
+
   'class-keepings': 'key',
+
+  'organizations': '&key, name, orgCode, parentOrgCode',
+  'officers': '[path+key]',
+  'members': '[path+key]',
+  'org-events': '&key, orgKey, organizer, date, status',
+  confirmations: '[path+key], status',
 });
 
 

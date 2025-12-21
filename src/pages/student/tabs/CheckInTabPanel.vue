@@ -43,10 +43,24 @@ async function checkInToSession(meeting: ClassMeetingModel) {
 
   isCheckingIn.value = true;
   try {
+    let location: { lat: number; lng: number } | undefined = undefined;
+    try {
+      if (navigator.geolocation) {
+        location = await new Promise<{ lat: number; lng: number }>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition((pos) => {
+            resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          }, (err) => reject(new Error(err?.message || 'Geolocation error')), { enableHighAccuracy: true, timeout: 5000 });
+        });
+      }
+    } catch (err) {
+      console.warn('Geolocation not available or permission denied', err);
+      location = undefined;
+    }
     await attendanceStore.checkInAttendance({
       student: currentStudent.value.ownerKey,
       meeting: meeting,
       status: 'check-in',
+      location
     });
 
     Notify.create({

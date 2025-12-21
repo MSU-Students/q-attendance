@@ -10,6 +10,7 @@ const authStore = useAuthStore();
 const drawer = ref(false);
 const miniState = ref(false);
 const userManagementExpanded = ref(true);
+const orgManagementExpanded = ref(true);
 
 const linksList: EssentialLinkProps[] = [
   {
@@ -34,6 +35,14 @@ const userManagementLinks: EssentialLinkProps[] = [
     title: 'User Approvals',
     icon: 'how_to_reg',
     link: '/admin/user-approvals',
+  },
+];
+
+const orgManagementLinks: EssentialLinkProps[] = [
+  {
+    title: 'Organizations',
+    icon: 'people',
+    link: '/admin/organizations',
   },
 ];
 
@@ -108,6 +117,22 @@ function toggleUserManagement() {
             <q-list>
               <EssentialLink
                 v-for="subLink in userManagementLinks"
+                :key="subLink.title"
+                v-bind="subLink"
+                class="q-pl-xl"
+              />
+            </q-list>
+          </q-expansion-item>
+          <q-expansion-item
+            v-if="!miniState"
+            v-model="orgManagementExpanded"
+            icon="groups"
+            label="Org Management"
+            @click="orgManagementExpanded != orgManagementExpanded"
+          >
+            <q-list>
+              <EssentialLink
+                v-for="subLink in orgManagementLinks"
                 :key="subLink.title"
                 v-bind="subLink"
                 class="q-pl-xl"

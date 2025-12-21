@@ -2,12 +2,12 @@
 import ApexCharts from 'apexcharts';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useUsersStore } from 'src/stores/user-store';
-import { useClassStore } from 'src/stores/class-store';
+import { useKeepingStore } from 'src/stores/keeping-store';
 import { MeetingCheckInModel } from 'src/models/attendance.models';
 
 // Initialize stores
 const userStore = useUsersStore();
-const classStore = useClassStore();
+const classStore = useKeepingStore();
 
 // Stats data
 const totalStudents = ref(0);
@@ -98,7 +98,7 @@ async function loadDashboardData() {
 
     // For classes, we'll use what's available in the store
     // Since loadAllClasses doesn't exist, we'll count what we can
-    await classStore.loadUserClasses('');
+    await classStore.loadUserKeeping('');
     totalClasses.value = classStore.teaching.length + classStore.enrolled.length;
 
     // For attendance data, we'll use what's available
