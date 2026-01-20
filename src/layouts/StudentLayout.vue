@@ -121,10 +121,11 @@ function openEnrollDialog() {
       <div class="drawer-content">
         <div class="drawer-header q-px-md q-py-sm">
           <div class="row items-center no-wrap">
-            <q-btn :to="{ name: 'home' }" dense flat>
-              <q-icon size="28px" class="q-mr-sm">
+            <q-btn dense flat :to="{ name: 'home' }">
+              <q-icon size="2rem" class="self-center">
                 <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
               </q-icon>
+              <q-tooltip>Go to Home Page</q-tooltip>
             </q-btn>
             <div class="text-subtitle1 text-weight-bold">Q-Class Attendance</div>
           </div>
