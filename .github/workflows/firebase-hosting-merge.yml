@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm install @rollup/rollup-linux-x64-gnu
-      - run: npm i && npm run build:pwa
+      - run: yarn add @rollup/rollup-linux-x64-gnu
+      - run: yarn && npm run build:pwa
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
