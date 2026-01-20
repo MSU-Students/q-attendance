@@ -11,11 +11,11 @@ onMounted(async () => {
 });
 
 const signinButton = () => {
-  void router.push('/auth/login');
+  void router.push({ name: 'login' });
 };
 
 const signupButton = () => {
-  void router.push('/auth/register');
+  void router.push({ name: 'register' });
 };
 
 // For the role-based features section
@@ -191,10 +191,10 @@ const statistics = [
 
 // For access portal links
 const portalLinks = [
-  { label: 'Student Portal', icon: 'school', link: '/auth/login' },
-  { label: 'Teacher Portal', icon: 'assignment_ind', link: '/auth/login' },
-  { label: 'Department Portal', icon: 'supervisor_account', link: '/auth/login' },
-  { label: 'Admin Portal', icon: 'admin_panel_settings', link: '/auth/login' },
+  { label: 'Student Portal', icon: 'school', link: '/login' },
+  { label: 'Teacher Portal', icon: 'assignment_ind', link: '/login' },
+  { label: 'Department Portal', icon: 'supervisor_account', link: '/login' },
+  { label: 'Admin Portal', icon: 'admin_panel_settings', link: '/login' },
 ];
 </script>
 

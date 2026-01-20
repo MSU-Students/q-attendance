@@ -65,7 +65,7 @@ const routes: RouteRecordRaw[] = [
 
   //loginPage
   {
-    path: '/auth',
+    path: '/',
     component: () => import('layouts/AuthLayout.vue'),
     children: [
       { path: 'login', name: 'login', component: () => import('pages/auth/LoginPage.vue'), meta: { anonymous: true } },
