@@ -140,14 +140,19 @@ const signupButton = () => {
 
         <q-separator spaced />
 
-        <q-item
-          v-if="authStore.currentAccounts.length"
-          clickable
-          v-ripple
-          :to="{ name: authStore.currentAccounts[0]?.role }"
-        >
-          <q-item-section>Dashboard</q-item-section>
-        </q-item>
+        <template v-if="authStore.currentAccounts.length">
+          <q-item
+            v-for="account in authStore.currentAccounts"
+            :key="account.key"
+            clickable
+            v-close-popup
+            :to="{ name: account.role }"
+          >
+            <q-item-section>
+              <q-item-label class="text-capitalize">{{ account.role }} Dashboard</q-item-label>
+            </q-item-section>
+          </q-item>
+        </template>
         <template v-else>
           <q-item clickable v-ripple @click="signinButton">
             <q-item-section>Sign In</q-item-section>

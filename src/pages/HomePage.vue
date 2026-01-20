@@ -18,13 +18,6 @@ const signupButton = () => {
   void router.push('/auth/register');
 };
 
-const gotoDashboard = () => {
-  const account = authStore.currentAccounts[0];
-  if (account) {
-    void router.push({ name: `${account.role}` });
-  }
-};
-
 // For the role-based features section
 const roleFeatures = [
   {
@@ -219,7 +212,34 @@ const portalLinks = [
             </p>
             <div class="q-gutter-md">
               <div v-if="authStore.currentAccounts">
-                <q-btn size="lg" color="primary" label="Go to Dashboard" @click="gotoDashboard" />
+                <q-btn
+                  v-if="authStore.currentAccounts.length == 0"
+                  unelevated
+                  color="primary"
+                  no-caps
+                  :to="{ name: 'apply-for-role' }"
+                  >Apply for Role</q-btn
+                >
+                <q-btn-dropdown v-else color="primary" label="Dashboard">
+                  <q-list>
+                    <q-item
+                      v-for="account in authStore.currentAccounts"
+                      :key="account.key"
+                      clickable
+                      v-close-popup
+                      :to="{ name: account.role }"
+                    >
+                      <q-item-section>
+                        <q-item-label class="text-capitalize">{{ account.role }}</q-item-label>
+                      </q-item-section>
+                    </q-item>
+                    <q-item :to="{ name: 'apply-for-role' }">
+                      <q-item-section>
+                        <q-item-label>Apply for Role</q-item-label>
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-btn-dropdown>
               </div>
               <div v-else class="row q-col-gutter-md">
                 <div class="col-12 col-sm-auto">

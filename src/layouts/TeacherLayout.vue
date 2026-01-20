@@ -95,6 +95,7 @@ function openCreateClassDialog() {
                 <q-icon size="2rem" class="self-center">
                   <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
                 </q-icon>
+                <q-tooltip>Go to Home Page</q-tooltip>
               </q-btn>
               <div v-if="!miniState" style="font-size: 1.4rem; margin-left: 0.5rem">
                 <strong>Q-Class Attendance</strong>
