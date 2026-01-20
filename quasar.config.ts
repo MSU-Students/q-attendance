@@ -3,6 +3,7 @@
 
 import { defineConfig } from '#q-app/wrappers';
 import { fileURLToPath } from 'node:url';
+import { version } from './package.json';
 
 export default defineConfig((ctx) => {
   return {
@@ -173,6 +174,9 @@ export default defineConfig((ctx) => {
       // extendGenerateSWOptions (cfg) {}
       extendInjectManifestOptions(cfg) {
         //
+      },
+      extendManifestJson(json) {
+        json.id = `${json.name}-${version}`;
       },
       // extendPWACustomSWConf (esbuildConf) {}
     },

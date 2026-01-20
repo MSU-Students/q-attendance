@@ -3,6 +3,7 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import { usePersistentStore } from './stores/persistent-store';
 
 //
@@ -13,5 +14,13 @@ window.addEventListener('online', () => {
 });
 window.addEventListener('offline', () => {
   persistentStore.updateOnlineState(false);
+});
+onMounted(() => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      // Reload the page to apply the update
+      window.location.reload();
+    });
+  }
 });
 </script>
