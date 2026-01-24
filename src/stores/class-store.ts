@@ -54,21 +54,35 @@ export const useClassStore = defineStore('class', {
 
     async enroll(payload: { class: ClassModel; student: UserModel }) {
       const persistentStore = usePersistentStore();
-      const [student, cls] = await Promise.all([
-        persistentStore.createRecord('enrolled', {
+      const cls = await persistentStore.getRecord('classes', payload.class.key);
+      const enrolled = cls?.enrolled?.find(e => e.email == payload.student.email);
+      if (cls && !enrolled) {
+        const student = await persistentStore.createRecord('enrolled', {
           ...payload.student,
           key: payload.student.ownerKey,
-        }, `/classes/${payload.class.key}`),
-        persistentStore.getRecord('classes', payload.class.key),
-      ]);
-      if (student && cls) {
-        cls.enrolled = cls.enrolled || [];
-        cls.enrolled.push(student);
+        }, `/classes/${payload.class.key}`);
+        if (student && cls) {
+          cls.enrolled = cls.enrolled || [];
+          cls.enrolled.push(student);
+        }
+      } else if (enrolled && payload.student.ownerKey) {
+        const student = await persistentStore.getRecord('enrolled', enrolled.key, `/classes/${payload.class.key}`);
+        if (student) {
+          student.ownerKey = payload.student.ownerKey;
+          student.dateRegistered = payload.student.dateRegistered as string;
+          student.avatar = payload.student.avatar as string;
+          student.fullName = payload.student.fullName;
+          student.emailVerified = payload.student.emailVerified as boolean;
+          await persistentStore.updateRecord('enrolled', enrolled.key, student, `/classes/${payload.class.key}`);
+        }
+      }
+      if (cls) {
         const keepings = await persistentStore.getRecord('class-keepings', payload.student.ownerKey);
         await persistentStore.updateRecord('class-keepings', payload.student.ownerKey, {
           enrolled: [...new Set([...(keepings?.enrolled || []), cls.key])],
         });
       }
+
     },
     async join(payload: { class: ClassModel; teacher: UserModel }) {
       const persistentStore = usePersistentStore();
@@ -89,41 +103,42 @@ export const useClassStore = defineStore('class', {
       }
     },
 
-    async unEnroll(payload: { classKey: string; studentKey: string }) {
+    async unEnroll(payload: { classKey: string; studentEmail: string }) {
       try {
         const persistentStore = usePersistentStore();
         const keepingStore = useKeepingStore();
         const cls = await this.loadClass(payload.classKey);
 
+        const enrolled = cls?.enrolled?.find((e) => e.email == payload.studentEmail);
         if (
           !cls ||
           !cls.key ||
-          !cls.enrolled ||
-          !cls.enrolled.find((e) => e.key == payload.studentKey)
+          !enrolled
         ) {
           return false;
         }
 
+
         await persistentStore.updateRecord(
           'enrolled',
-          payload.studentKey,
+          enrolled.key,
           {
             status: 'inactive',
           },
           `/classes/${payload.classKey}`,
         );
 
-        const keepings = await persistentStore.getRecord('class-keepings', payload.studentKey);
+        const keepings = await persistentStore.getRecord('class-keepings', enrolled.key);
         if (keepings) {
           const updatedEnrolled = (keepings.enrolled || []).filter(
             (classKey: string) => classKey !== payload.classKey,
           );
 
-          await persistentStore.updateRecord('class-keepings', payload.studentKey, {
+          await persistentStore.updateRecord('class-keepings', enrolled.key, {
             enrolled: updatedEnrolled,
           });
         }
-        keepingStore.unEnroll(payload.classKey, payload.studentKey);
+        keepingStore.unEnroll(payload.classKey, enrolled.key);
         return true;
       } catch (error) {
         console.error('Error un-enrolling student:', error);

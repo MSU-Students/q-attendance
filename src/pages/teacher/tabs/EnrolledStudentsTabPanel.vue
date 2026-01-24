@@ -51,7 +51,7 @@ async function removeStudent(student: UserModel) {
   if (activeClass.value && student.key) {
     await classStore.unEnroll({
       classKey: activeClass.value.key,
-      studentKey: student.key,
+      studentEmail: student.email,
     });
   }
 }
@@ -60,13 +60,8 @@ async function removeStudent(student: UserModel) {
   <q-tab-panel :name="name">
     <div class="q-mb-md flex justify-between items-center">
       <div class="text-h6">Enrolled Students ({{ enrolledStudents.length }})</div>
-      <q-btn
-        color="primary"
-        disabled
-        icon="person_add"
-        label="Add Student"
-        @click="enrollStudent"
-      />
+      <slot />
+      <q-btn color="primary" icon="person_add" label="Add Student" @click="enrollStudent" />
     </div>
 
     <q-list bordered separator>
