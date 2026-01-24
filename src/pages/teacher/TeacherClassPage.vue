@@ -71,7 +71,11 @@ const openGoogleClassroomImport = async () => {
     });
     client.requestAccessToken();
   } catch (error) {
-    $q.notify({ type: 'negative', message: 'Failed to load Google Sign-In' });
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to load Google Sign-In',
+      caption: String(error),
+    });
   }
 };
 
@@ -87,7 +91,11 @@ const fetchGoogleCourses = async () => {
     const data = await response.json();
     googleCourses.value = data.courses || [];
   } catch (error) {
-    $q.notify({ type: 'negative', message: 'Failed to fetch courses' });
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to fetch courses',
+      caption: String(error),
+    });
   } finally {
     loadingGoogle.value = false;
   }
@@ -149,15 +157,6 @@ const importStudents = async (courseId: string) => {
           </div>
           <div class="text-caption">Class Code: {{ activeClass.classCode }}</div>
         </q-card-section>
-        <q-card-actions align="right">
-          <q-btn
-            flat
-            icon="cloud_download"
-            label="Import from Google Classroom"
-            color="primary"
-            @click="openGoogleClassroomImport"
-          />
-        </q-card-actions>
       </q-card>
     </div>
 
@@ -177,7 +176,15 @@ const importStudents = async (courseId: string) => {
     <q-separator />
 
     <q-tab-panels v-model="tab" v-if="activeClass" animated>
-      <EnrolledStudentsTabPanel :current-class="activeClass" name="students" />
+      <EnrolledStudentsTabPanel :current-class="activeClass" name="students">
+        <q-btn
+          flat
+          icon="cloud_download"
+          label="Import from Google Classroom"
+          color="primary"
+          @click="openGoogleClassroomImport"
+        />
+      </EnrolledStudentsTabPanel>
       <ClassMeetingListingTabPanel :cls="activeClass" name="attendance" />
       <AnalysisTabPanel :cls="activeClass" name="analysis" />
     </q-tab-panels>

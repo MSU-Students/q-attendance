@@ -190,7 +190,7 @@ async function unenrollCourse(cls: ClassModel) {
   try {
     const success = await classStore.unEnroll({
       classKey: cls.key,
-      studentKey: authStore.studentAccount?.ownerKey,
+      studentEmail: authStore.studentAccount?.email || '',
     });
 
     if (success) {
