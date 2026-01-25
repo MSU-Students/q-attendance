@@ -82,7 +82,6 @@ export const useClassStore = defineStore('class', {
           enrolled: [...new Set([...(keepings?.enrolled || []), cls.key])],
         });
       }
-
     },
     async join(payload: { class: ClassModel; teacher: UserModel }) {
       const persistentStore = usePersistentStore();
