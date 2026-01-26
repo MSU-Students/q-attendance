@@ -70,7 +70,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: 'login', name: 'login', component: () => import('pages/auth/LoginPage.vue'), meta: { anonymous: true } },
       { name: 'register', path: 'register', component: () => import('pages/auth/RegisterPage.vue'), meta: { anonymous: true } },
-      { name: 'apply-for-role', path: 'apply', component: () => import('pages/auth/ApplyForRolePage.vue'), meta: {} },
+      { name: 'apply-for-role', path: 'apply/:role?', component: () => import('pages/auth/ApplyForRolePage.vue'), meta: {} },
     ]
   },
   {

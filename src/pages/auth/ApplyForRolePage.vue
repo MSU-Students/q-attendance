@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useAuthStore } from 'src/stores/auth-store';
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { Notify } from 'quasar';
 import { UserModel } from 'src/models/user.models';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const loading = ref(false);
@@ -15,7 +16,8 @@ async function applyForRole(role: UserModel['role']) {
   try {
     const account = await authStore.applyForRole(role);
     if (account?.status == 'active') {
-      await router.replace({ name: `${role}` });
+      const redirect = route.query.redirect as string | undefined;
+      await router.replace(redirect ? redirect : { name: role });
     } else {
       await router.replace({ name: 'status' });
     }
@@ -35,6 +37,11 @@ async function applyForRole(role: UserModel['role']) {
 function goToHome() {
   void router.replace({ name: 'home' });
 }
+onMounted(() => {
+  if (typeof route.params?.role == 'string') {
+    applyForRole(route.params?.role as UserModel['role']);
+  }
+});
 </script>
 
 <template>

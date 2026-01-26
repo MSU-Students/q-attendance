@@ -63,8 +63,21 @@ export default defineRouter(function (/* { store, ssrContext } */) {
       showNotification();
       next({ name: 'home' });
     } else if (to.meta?.student && !authStore.isUserStudent) {
-      showNotification();
-      next({ name: 'home' });
+      if (!authStore.isUserLoggedIn && to.query?.joinCode) {
+        next({
+          name: 'login',
+          query: { redirect: to.fullPath }
+        })
+      } else if (authStore.isUserLoggedIn) {
+        next({
+          name: 'apply-for-role',
+          params: { role: 'student' },
+          query: { redirect: to.fullPath }
+        })
+      } else {
+        showNotification();
+        next({ name: 'home' });
+      }
     } else {
       next();
     }

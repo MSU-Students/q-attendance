@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useAuthStore } from 'src/stores/auth-store';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { Notify } from 'quasar';
 
 const authStore = useAuthStore();
 const router = useRouter();
-
+const route = useRoute();
 const username = ref('');
 const password = ref('');
 const isPwd = ref(true);
@@ -28,7 +28,8 @@ async function onSubmit() {
   try {
     const auth = await authStore.login(username.value, password.value);
     if (auth) {
-      await router.replace({ name: 'home' });
+      const redirect = route.query.redirect as string | undefined;
+      await router.replace(redirect ? redirect : { name: 'home' });
     } else {
       Notify.create({
         message: 'Invalid credentials. Please try again.',
@@ -53,9 +54,8 @@ async function continueWithGoogle() {
   loading.value = true;
   try {
     await authStore.loginWithGoogle();
-    await router.replace({
-      name: 'home',
-    });
+    const redirect = route.query.redirect as string | undefined;
+    await router.replace(redirect ? redirect : { name: 'home' });
   } catch {
     Notify.create({
       message: 'Google login failed. Please try again.',
@@ -69,8 +69,12 @@ async function continueWithGoogle() {
 }
 
 function goToRegister() {
+  const redirect = route.query.redirect as string | undefined;
   void router.push({
     name: 'register',
+    query: {
+      redirect,
+    },
   });
 }
 async function forgetPassword() {

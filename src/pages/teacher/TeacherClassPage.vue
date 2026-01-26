@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { uid, useQuasar } from 'quasar';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { ClassModel } from 'src/models/class.models';
 import ClassMeetingListingTabPanel from './tabs/ClassMeetingListingTabPanel.vue';
 import EnrolledStudentsTabPanel from './tabs/EnrolledStudentsTabPanel.vue';
 import AnalysisTabPanel from './tabs/AnalysisTabPanel.vue';
+import QrcodeVue from 'qrcode.vue';
 import { useClassStore } from 'src/stores/class-store';
 
 const $q = useQuasar();
@@ -28,7 +29,20 @@ onMounted(async () => {
     currentClass.value = await classStore.loadClass(route.params.classKey);
   }
 });
+//classCode
+const showClassCodeDialog = ref(false);
+const maximizeClassCodeDialog = ref(false);
+const $router = useRouter();
+const classCode = computed(() => {
+  const link = $router.resolve({
+    name: 'student',
+    query: {
+      joinCode: activeClass.value?.classCode || '',
+    },
+  });
 
+  return `${location.origin}${link.fullPath}`;
+});
 // Google Classroom Integration
 const showGoogleClassroomDialog = ref(false);
 const googleCourses = ref<any[]>([]);
@@ -144,6 +158,39 @@ const importStudents = async (courseId: string) => {
     $q.loading.hide();
   }
 };
+function copyText(text: string) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        $q.notify({
+          message: 'Class Code Copied',
+        });
+      })
+      .catch((err) => {
+        console.error('Failed to copy text: ', err);
+      });
+  } else {
+    // Fallback for older browsers or non-HTTPS
+    fallbackCopyTextToClipboard(text);
+  }
+}
+
+// A simple fallback using the deprecated document.execCommand('copy') method
+function fallbackCopyTextToClipboard(text: string) {
+  const tempInput = document.createElement('input');
+  tempInput.style.position = 'absolute';
+  tempInput.style.left = '-1000px';
+  tempInput.style.top = '-1000px';
+  tempInput.value = text;
+  document.body.appendChild(tempInput);
+  tempInput.select();
+  document.execCommand('copy');
+  document.body.removeChild(tempInput);
+  $q.notify({
+    message: 'Class Code Copied',
+  });
+}
 </script>
 
 <template>
@@ -155,7 +202,12 @@ const importStudents = async (courseId: string) => {
           <div class="text-subtitle2">
             Section: {{ activeClass.section }} | Academic Year: {{ activeClass.academicYear }}
           </div>
-          <div class="text-caption">Class Code: {{ activeClass.classCode }}</div>
+          <div class="text-caption">
+            Class Code:
+            <q-btn @click="showClassCodeDialog = true" dense flat>{{
+              activeClass.classCode
+            }}</q-btn>
+          </div>
         </q-card-section>
       </q-card>
     </div>
@@ -222,6 +274,30 @@ const importStudents = async (courseId: string) => {
 
         <q-card-actions align="right">
           <q-btn flat label="Close" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+    <q-dialog v-model="showClassCodeDialog" :maximized="maximizeClassCodeDialog">
+      <q-card style="min-width: 350px">
+        <q-card-section class="text-center">
+          <span class="text-h1">{{ activeClass?.classCode || '' }}</span>
+        </q-card-section>
+        <q-card-section class="text-center">
+          <qrcode-vue
+            :value="classCode"
+            :size="
+              maximizeClassCodeDialog ? Math.min($q.screen.height, $q.screen.width) - 200 : 200
+            "
+            level="M"
+          ></qrcode-vue>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn v-close-popup icon="close"></q-btn>
+          <q-btn
+            icon="fullscreen"
+            @click="maximizeClassCodeDialog = !maximizeClassCodeDialog"
+          ></q-btn>
+          <q-btn icon="content_copy" @click="copyText(classCode)">Copy Link</q-btn>
         </q-card-actions>
       </q-card>
     </q-dialog>

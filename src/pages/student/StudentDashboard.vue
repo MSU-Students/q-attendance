@@ -2,7 +2,7 @@
 import { useKeepingStore } from 'src/stores/keeping-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { Notify, Dialog, copyToClipboard } from 'quasar';
 import { ClassModel } from 'src/models/class.models';
 import { useClassStore } from 'src/stores/class-store';
@@ -11,6 +11,7 @@ const classStore = useClassStore();
 const keepingStore = useKeepingStore();
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 
 const showEnrollDialog = ref(false);
 const classCode = ref('');
@@ -27,8 +28,11 @@ const handleEnrollDialog = () => {
 
 onMounted(async () => {
   await loadStudentClasses();
-
   window.addEventListener('open-enroll-dialog', handleEnrollDialog);
+  if (typeof route.query?.joinCode == 'string') {
+    showEnrollDialog.value = true;
+    classCode.value = route.query.joinCode;
+  }
 });
 
 onUnmounted(() => {

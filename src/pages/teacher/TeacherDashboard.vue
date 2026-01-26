@@ -43,11 +43,12 @@ async function saveClass() {
       position: 'top',
       timeout: 2000,
     });
+    const classUid = uid();
     const newClass: ClassModel = {
-      key: uid(),
+      key: classUid,
       name: className.value,
       academicYear: date.formatDate(new Date(), 'YYYY'),
-      classCode: Math.random().toString(36).substring(2, 6).toUpperCase(),
+      classCode: hashName(classUid).toString(36).substring(2, 8).toUpperCase(),
       section: classSection.value,
     };
     const account = authStore.currentAccounts.find((a) => a.role == 'teacher');
@@ -58,6 +59,16 @@ async function saveClass() {
 
   className.value = '';
   showNewClassDialog.value = false;
+}
+function hashName(name: string) {
+  let hash = 0;
+  if (name.length == 0) return hash;
+  for (let i = 0; i < name.length; i++) {
+    const chr = name.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash = hash & hash;
+  }
+  return hash;
 }
 
 function navigateToClass(cls: ClassModel) {

@@ -24,6 +24,7 @@
     "firebase": "^11.5.0",
     "papaparse": "^5.5.3",
     "pinia": "^3.0.1",
+    "qrcode.vue": "^3.6.0",
     "quasar": "^2.16.0",
     "register-service-worker": "^1.7.2",
     "sass-embedded": "^1.97.2",
