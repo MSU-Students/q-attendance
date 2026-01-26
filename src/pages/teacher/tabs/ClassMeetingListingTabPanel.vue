@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Notify, QTableColumn } from 'quasar';
+import { Notify, QTableColumn, useQuasar } from 'quasar';
 import { ClassMeetingModel } from 'src/models/attendance.models';
 import { onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -38,6 +38,7 @@ const attendanceColumns: QTableColumn[] = [
     sortable: false,
   },
 ];
+const $q = useQuasar();
 const $router = useRouter();
 const attendanceStore = useAttendanceStore();
 const attendanceHistory = ref<ClassMeetingModel[]>([]);
@@ -90,6 +91,27 @@ function startRollCall(meeting: ClassMeetingModel) {
     },
   });
 }
+
+function cancelMeeting(meeting: ClassMeetingModel) {
+  $q.notify({
+    timeout: 0,
+    color: 'secondary',
+    textColor: 'primary',
+    position: 'center',
+    message: 'Cancel meeting',
+    caption: `Date: ${meeting.date}`,
+    actions: [
+      {
+        label: 'Proceed',
+        icon: 'arrow_circle_right',
+        handler: async () => {
+          await attendanceStore.cancelMeeting(meeting.key);
+        },
+      },
+      { label: 'Abort', icon: 'cancel' },
+    ],
+  });
+}
 </script>
 <template>
   <q-tab-panel :name="name">
@@ -129,15 +151,19 @@ function startRollCall(meeting: ClassMeetingModel) {
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
           <div>
-            <q-btn
-              v-if="props.row.status === 'open'"
-              color="green"
-              icon="how_to_reg"
-              dense
-              round
-              @click="startRollCall(props.row)"
-            >
-              <q-tooltip>Start Roll Call</q-tooltip>
+            <q-btn v-if="props.row.status === 'open'" color="green" icon="apps" dense round>
+              <q-menu fit>
+                <q-list style="min-width: 100px">
+                  <q-item clickable @click="startRollCall(props.row)">
+                    <q-item-section avatar><q-icon name="how_to_reg"></q-icon></q-item-section>
+                    <q-item-section>Attendance</q-item-section>
+                  </q-item>
+                  <q-item clickable v-close-popup @click="cancelMeeting(props.row)">
+                    <q-item-section avatar><q-icon name="event_busy"></q-icon></q-item-section>
+                    <q-item-section>Cancel</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
             </q-btn>
             <q-btn
               v-else

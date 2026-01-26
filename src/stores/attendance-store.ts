@@ -176,7 +176,9 @@ export const useAttendanceStore = defineStore('attendance', {
         const persistentStore = usePersistentStore();
         const meeting = await persistentStore.getRecord('meetings', meetingKey);
         if (!meeting) throw new Error('Meeting not found');
-
+        if (meeting.status == 'cancelled') {
+          return;
+        }
         const checkIns = await persistentStore.findRecords('check-ins', `/meetings/${meetingKey}`);
         const meetingDate = new Date(meeting.date);
         const cuValidWindowStart = new Date(meetingDate.getTime() - 60 * 60 * 1000); // 60 mins before
@@ -325,6 +327,33 @@ export const useAttendanceStore = defineStore('attendance', {
         const now = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
         await persistentStore.updateRecord('meetings', meetingKey, {
           status: 'concluded',
+          latestCall: now
+        });
+
+        // Trigger automated validation when meeting is concluded
+        try {
+          await this.validateMeeting(meetingKey);
+        } catch (err) {
+          // Validation failure shouldn't block the conclusion; log the error
+          console.error('Automated validation failed for meeting after conclusion:', err);
+        }
+
+        return true;
+      } catch (error) {
+        console.error('Error concluding meeting:', error);
+        throw error;
+      }
+    },
+    async cancelMeeting(meetingKey: string) {
+      try {
+        const persistentStore = usePersistentStore();
+        const existingMeeting = await persistentStore.getRecord('meetings', meetingKey);
+        if (!existingMeeting) {
+          throw new Error('Meeting not found');
+        }
+        const now = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
+        await persistentStore.updateRecord('meetings', meetingKey, {
+          status: 'cancelled',
           latestCall: now
         });
 
