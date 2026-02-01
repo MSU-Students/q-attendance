@@ -6,7 +6,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { ClassModel } from 'src/models/class.models';
 import { useRouter } from 'vue-router';
 import { useClassStore } from 'src/stores/class-store';
-import { StudentUserModel, UserModel } from 'src/models';
+import { StudentUserModel } from 'src/models';
 
 const classStore = useClassStore();
 const keepingStore = useKeepingStore();
@@ -56,7 +56,7 @@ async function saveClass() {
     const account = authStore.currentAccounts.find((a) => a.role == 'teacher');
     if (account) {
       await classStore.saveClass(newClass, account);
-
+      const classCreated = await classStore.loadClass(newClass.key);
       if (studentsToEnroll.value.length > 0) {
         const notify = $q.notify({
           group: false,
@@ -70,8 +70,8 @@ async function saveClass() {
         for (const student of studentsToEnroll.value) {
           try {
             await classStore.enroll({
-              class: newClass,
-              student,
+              class: JSON.parse(JSON.stringify(classCreated)),
+              student: JSON.parse(JSON.stringify(student)),
             });
             count++;
             notify({ caption: `${Math.round((count / studentsToEnroll.value.length) * 100)}%` });
@@ -232,6 +232,7 @@ function parseMsuClassList(file: File) {
             course: match[3]!.trim(),
             contact: match[4]!.trim(),
             email: match[5]!.trim(),
+            status: 'active',
             key: uid(),
             ownerKey: '',
           });

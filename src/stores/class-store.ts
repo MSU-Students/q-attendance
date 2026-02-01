@@ -59,7 +59,7 @@ export const useClassStore = defineStore('class', {
       if (cls && !enrolled) {
         const student = await persistentStore.createRecord('enrolled', {
           ...payload.student,
-          key: payload.student.ownerKey,
+          key: payload.student.key,
         }, `/classes/${payload.class.key}`);
         if (student && cls) {
           cls.enrolled = cls.enrolled || [];
@@ -76,7 +76,7 @@ export const useClassStore = defineStore('class', {
           await persistentStore.updateRecord('enrolled', enrolled.key, student, `/classes/${payload.class.key}`);
         }
       }
-      if (cls) {
+      if (cls && payload.student.ownerKey) {
         const keepings = await persistentStore.getRecord('class-keepings', payload.student.ownerKey);
         await persistentStore.updateRecord('class-keepings', payload.student.ownerKey, {
           enrolled: [...new Set([...(keepings?.enrolled || []), cls.key])],
