@@ -37,8 +37,10 @@ const teacherClasses = computed<ClassToday[]>(() => {
         return -1;
       } else if (a.meetings.length == 0 && b.meetings.length) {
         return 1;
-      } else {
+      } else if (a.meetings.length && b.meetings.length) {
         return a.meetings[0]!.date.localeCompare(b.meetings[0]!.date);
+      } else {
+        return 0;
       }
     });
 });
