@@ -171,6 +171,8 @@ const createAttendanceRecord = async () => {
     icon: 'check_circle',
     position: 'top',
     timeout: 0,
+    group: false,
+    spinner: true,
   });
   for (let index = 0; index < meetingsToCreate.length; index++) {
     const meeting = meetingsToCreate[index];
@@ -179,20 +181,27 @@ const createAttendanceRecord = async () => {
       await attendanceStore.newClassMeeting(JSON.parse(JSON.stringify(meeting)));
       notify({
         message: `${meeting?.date} attendance record created successfully`,
+        caption: `${index + 1} of ${meetingsToCreate.length}`,
         color: 'green',
         icon: 'check_circle',
       });
     } catch (error) {
-      console.error('Error creating attendance record:', error);
       Notify.create({
         message: 'Failed to create attendance record',
         color: 'negative',
         icon: 'error',
         position: 'top',
         timeout: 3000,
+        spinner: false,
       });
     }
   }
+  notify({
+    message: `Done creating ${meetingsToCreate.length} Meeting Records`,
+    color: 'green',
+    icon: 'check_circle',
+    timeout: 3000,
+  });
   void router.push({
     name: 'teacherClass',
     params: { classKey: activeClass.value.key },
