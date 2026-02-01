@@ -6,10 +6,15 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { ClassModel } from 'src/models/class.models';
 import { useRouter } from 'vue-router';
 import { useClassStore } from 'src/stores/class-store';
-import { StudentUserModel } from 'src/models';
+import { ClassMeetingModel, StudentUserModel } from 'src/models';
+import { useAttendanceStore } from 'src/stores/attendance-store';
 
+type ClassToday = ClassModel & {
+  meetings: ClassMeetingModel[];
+};
 const classStore = useClassStore();
 const keepingStore = useKeepingStore();
+const attendanceStore = useAttendanceStore();
 const authStore = useAuthStore();
 const router = useRouter();
 const $q = useQuasar();
@@ -19,13 +24,31 @@ const className = ref('');
 const classSection = ref('');
 const studentsToEnroll = ref<any[]>([]);
 
-const teacherClasses = computed(() => {
-  return keepingStore.teaching;
+const teacherClasses = computed<ClassToday[]>(() => {
+  return keepingStore.teaching
+    .map((cls) => ({
+      ...cls,
+      meetings: meetings.value
+        .filter((m) => m.classKey == cls.key)
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    }))
+    .sort((a, b) => {
+      if (b.meetings.length == 0 && a.meetings.length) {
+        return -1;
+      } else if (a.meetings.length == 0 && b.meetings.length) {
+        return 1;
+      } else {
+        return a.meetings[0]!.date.localeCompare(b.meetings[0]!.date);
+      }
+    });
 });
+const meetings = ref<ClassMeetingModel[]>([]);
 
 onMounted(async () => {
   await keepingStore.loadUserKeeping(authStore.teacherAccount?.ownerKey || '');
   window.addEventListener('open-create-class-dialog', addNewClass);
+  const classKeys = teacherClasses.value.map((cls) => cls.key);
+  meetings.value = await attendanceStore.loadMeetings(classKeys, new Date());
 });
 
 onUnmounted(() => {
@@ -320,6 +343,16 @@ function parseMsuClassList(file: File) {
               >
             </q-item-section>
           </div>
+          <q-card-actions>
+            <q-btn
+              dense
+              icon="event"
+              rounded
+              v-for="meeting in theClass.meetings"
+              :key="meeting.key"
+              >{{ date.formatDate(meeting.date, 'hh:mm A') }}</q-btn
+            >
+          </q-card-actions>
         </q-card>
       </div>
 

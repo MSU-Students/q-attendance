@@ -83,7 +83,21 @@ export const useAttendanceStore = defineStore('attendance', {
         return [];
       }
     },
-
+    async loadMeetings(classKeys: string[], targetDate: string | Date) {
+      const persistentStore = usePersistentStore();
+      const startDate = new Date(targetDate);
+      startDate.setHours(0, 0, 0);
+      const endDate = new Date(targetDate);
+      endDate.setHours(23, 59, 59);
+      const records = await persistentStore.findRecords('meetings', undefined, {
+        classKey: { 'in': classKeys },
+        date: {
+          '>=': date.formatDate(startDate, 'YYYY/MM/DD HH:mm'),
+          '<=': date.formatDate(endDate, 'YYYY/MM/DD HH:mm')
+        }
+      });
+      return records;
+    },
     streamClassMeetings(classKey: string, options: {
       student?: string | undefined
       loadAllCheckIns?: boolean
