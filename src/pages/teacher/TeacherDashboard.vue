@@ -6,6 +6,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { ClassModel } from 'src/models/class.models';
 import { useRouter } from 'vue-router';
 import { useClassStore } from 'src/stores/class-store';
+import { StudentUserModel, UserModel } from 'src/models';
 
 const classStore = useClassStore();
 const keepingStore = useKeepingStore();
@@ -16,6 +17,7 @@ const $q = useQuasar();
 const showNewClassDialog = ref(false);
 const className = ref('');
 const classSection = ref('');
+const studentsToEnroll = ref<any[]>([]);
 
 const teacherClasses = computed(() => {
   return keepingStore.teaching;
@@ -54,10 +56,38 @@ async function saveClass() {
     const account = authStore.currentAccounts.find((a) => a.role == 'teacher');
     if (account) {
       await classStore.saveClass(newClass, account);
+
+      if (studentsToEnroll.value.length > 0) {
+        const notify = $q.notify({
+          group: false,
+          timeout: 0,
+          spinner: true,
+          message: `Enrolling ${studentsToEnroll.value.length} students...`,
+          caption: '0%',
+        });
+
+        let count = 0;
+        for (const student of studentsToEnroll.value) {
+          try {
+            await classStore.enroll({
+              class: newClass,
+              student,
+            });
+            count++;
+            notify({ caption: `${Math.round((count / studentsToEnroll.value.length) * 100)}%` });
+          } catch (error) {
+            console.error('Error enrolling student:', student, error);
+          }
+        }
+        notify({ icon: 'check', spinner: false, message: 'Enrollment complete', timeout: 2000 });
+        studentsToEnroll.value = [];
+      }
     }
   }
 
   className.value = '';
+  classSection.value = '';
+  classList.value = undefined;
   showNewClassDialog.value = false;
 }
 function hashName(name: string) {
@@ -167,9 +197,57 @@ function deleteCourse(cls: ClassModel) {
       });
   });
 }
+const classList = ref<File>();
+function parseMsuClassList(file: File) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target?.result as string;
+    if (!text) return;
 
-function createAttendance() {
-  void router.push({ name: 'createAttendance' });
+    const headerMatch = text.match(/Subject\/Section:\s*(.+?)-([^\n\r]+)/);
+    if (headerMatch) {
+      className.value = headerMatch[1]!.trim();
+      classSection.value = headerMatch[2]!.trim();
+    }
+
+    const lines = text.split(/\r?\n/);
+    let parsingStudents = false;
+    const parsedStudents: StudentUserModel[] = [];
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('Name of Students:')) {
+        parsingStudents = true;
+        continue;
+      }
+      if (parsingStudents) {
+        const studentRegex = /^\d+\.\)\s+([^\t]+)\t([^\t]+)\t([^\t]+)\t([^\t]+)\t([^\t]+)/;
+        const match = trimmed.match(studentRegex);
+        if (match) {
+          parsedStudents.push({
+            studentId: match[1]!.trim(),
+            fullName: match[2]!.trim(),
+            role: 'student',
+            course: match[3]!.trim(),
+            contact: match[4]!.trim(),
+            email: match[5]!.trim(),
+            key: uid(),
+            ownerKey: '',
+          });
+        }
+      }
+    }
+    studentsToEnroll.value = parsedStudents;
+    if (parsedStudents.length > 0) {
+      Notify.create({
+        message: `Parsed ${parsedStudents.length} students`,
+        color: 'positive',
+        icon: 'check',
+      });
+    }
+  };
+  reader.readAsText(file);
 }
 </script>
 
@@ -177,13 +255,6 @@ function createAttendance() {
   <q-page class="q-pa-md allCards">
     <div class="row items-center justify-between q-mb-lg">
       <div class="text-h5 text-weight-bold">My Classes</div>
-      <q-btn
-        color="primary"
-        icon="assignment"
-        label="Create Attendance"
-        @click="createAttendance"
-        unelevated
-      />
     </div>
 
     <div class="row q-col-gutter-md">
@@ -265,7 +336,7 @@ function createAttendance() {
       </div>
     </div>
 
-    <q-dialog v-model="showNewClassDialog" persistent>
+    <q-dialog v-model="showNewClassDialog" persistent @show="classList = undefined">
       <q-card class="create-dialog">
         <q-card-section class="row items-center q-pb-none">
           <div class="dialog-title">Create class</div>
@@ -304,6 +375,18 @@ function createAttendance() {
         </q-card-section>
 
         <q-card-actions align="right" class="q-pa-md dialog-actions">
+          <q-file
+            outlined
+            v-model="classList"
+            label="ClassList"
+            @update:model-value="parseMsuClassList"
+          >
+            <template v-slot:prepend>
+              <q-icon name="attach_file" />
+            </template>
+            <q-tooltip>classlist.txt download from MSU Module</q-tooltip>
+          </q-file>
+          <q-space />
           <q-btn flat label="Cancel" color="grey-7" v-close-popup class="dialog-btn" />
           <q-btn
             unelevated

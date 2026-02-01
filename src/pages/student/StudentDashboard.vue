@@ -81,7 +81,10 @@ async function enrollInClass() {
     if (authStore.studentAccount) {
       await classStore.enroll({
         class: foundClass,
-        student: authStore.studentAccount,
+        student: {
+          ...authStore.studentAccount,
+          role: 'student',
+        },
       });
 
       Notify.create({

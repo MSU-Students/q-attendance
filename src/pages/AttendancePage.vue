@@ -48,6 +48,7 @@ async function saveStudent() {
         ownerKey: '',
         email: 'dummy@mail.com',
         fullName: payload.student,
+        role: 'student',
       },
     });
   }

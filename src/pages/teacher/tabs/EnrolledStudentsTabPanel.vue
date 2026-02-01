@@ -41,6 +41,7 @@ async function saveStudent() {
         ownerKey: '',
         email: studentEmail.value,
         fullName: studentName.value,
+        role: 'student',
       },
     });
   }
@@ -104,6 +105,7 @@ async function studentsFromClipboard() {
                       ownerKey: '',
                       email: student.email,
                       fullName: student.fullName,
+                      role: 'student',
                     },
                   })
                   .then(resolve, resolve);

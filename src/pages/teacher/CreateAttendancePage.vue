@@ -188,6 +188,7 @@ const createAttendanceRecord = async () => {
     } catch (error) {
       Notify.create({
         message: 'Failed to create attendance record',
+        caption: String(error),
         color: 'negative',
         icon: 'error',
         position: 'top',

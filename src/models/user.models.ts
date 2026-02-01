@@ -1,6 +1,6 @@
 import { Entity } from './base.model';
 
-export interface UserModel extends Entity {
+interface UserBaseModel extends Entity {
   ownerKey: string;
   fullName: string;
   email: string;
@@ -8,5 +8,22 @@ export interface UserModel extends Entity {
   avatar?: string;
   dateRegistered?: string;
   status?: 'active' | 'inactive' | 'pending';
-  role?: 'teacher' | 'admin' | 'supervisor' | 'student' | undefined
+};
+
+export interface TeacherUserModel extends UserBaseModel {
+  role: 'teacher';
 }
+export interface AdminUserModel extends UserBaseModel {
+  role: 'admin';
+}
+export interface SupervisorUserModel extends UserBaseModel {
+  role: 'supervisor'
+}
+export interface StudentUserModel extends UserBaseModel {
+  role: 'student';
+  course?: string;
+  contact?: string;
+  studentId?: string;
+}
+export type UserModel = TeacherUserModel | AdminUserModel | SupervisorUserModel | StudentUserModel;
+

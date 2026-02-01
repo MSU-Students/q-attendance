@@ -139,6 +139,7 @@ const importStudents = async (courseId: string) => {
             ownerKey: '',
             email: student.profile.emailAddress,
             fullName: student.profile.name?.fullName || 'Unknown',
+            role: 'student',
           },
         });
         importedCount++;
