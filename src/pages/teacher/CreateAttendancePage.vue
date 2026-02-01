@@ -20,6 +20,20 @@ const attendanceStatus = ref<ClassMeetingModel['status']>('open');
 const meetingLocation = ref<{ lat: number; lng: number } | null>(null);
 const isSubmitting = ref(false);
 const existingMeetingFound = ref(false);
+const isRecurring = ref(false);
+const recurrenceType = ref('daily');
+const recurrenceEndDate = ref('');
+const selectedWeekDays = ref<number[]>([]);
+
+const weekDayOptions = [
+  { label: 'Mon', value: 1 },
+  { label: 'Tue', value: 2 },
+  { label: 'Wed', value: 3 },
+  { label: 'Thu', value: 4 },
+  { label: 'Fri', value: 5 },
+  { label: 'Sat', value: 6 },
+  { label: 'Sun', value: 0 },
+];
 
 const activeClass = computed(() => {
   if (route.params?.classKey === currentClass.value?.key) {
@@ -46,6 +60,7 @@ onMounted(async () => {
     currentClass.value = await classStore.loadClass(route.params.classKey);
     await attendanceStore.loadClassMeetings(route.params.classKey);
   }
+  useMyLocation();
 });
 
 const checkExistingMeeting = () => {
@@ -73,7 +88,7 @@ const createAttendanceRecord = async () => {
     return;
   }
 
-  if (checkExistingMeeting()) {
+  if (!isRecurring.value && checkExistingMeeting()) {
     Notify.create({
       message: 'An attendance record already exists for this date and time',
       color: 'negative',
@@ -86,10 +101,61 @@ const createAttendanceRecord = async () => {
 
   isSubmitting.value = true;
 
-  try {
-    const dateTimeString = `${attendanceDate.value} ${attendanceTime.value}`;
+  const dateTimeString = `${attendanceDate.value} ${attendanceTime.value}`;
+  const meetingsToCreate: ClassMeetingModel[] = [];
 
-    const newMeeting: ClassMeetingModel = {
+  if (isRecurring.value) {
+    if (!recurrenceEndDate.value) {
+      Notify.create({
+        message: 'End date is required for recurring meetings',
+        color: 'negative',
+      });
+      return;
+    }
+
+    const start = date.extractDate(attendanceDate.value, 'YYYY/MM/DD');
+    const end = date.extractDate(recurrenceEndDate.value, 'YYYY/MM/DD');
+
+    if (end <= start) {
+      Notify.create({
+        message: 'Recurrence end date must be after the start date',
+        color: 'negative',
+      });
+      return;
+    }
+
+    let current = start;
+
+    while (current <= end) {
+      const day = current.getDay();
+      if (
+        recurrenceType.value === 'daily' ||
+        (recurrenceType.value === 'weekly' && selectedWeekDays.value.includes(day))
+      ) {
+        const dateStr = date.formatDate(current, 'YYYY/MM/DD');
+        const dtString = `${dateStr} ${attendanceTime.value}`;
+
+        // Check if meeting exists
+        const exists = attendanceStore.meetings.some(
+          (m) => m.classKey === activeClass.value?.key && m.date === dtString,
+        );
+
+        if (!exists) {
+          meetingsToCreate.push({
+            key: uid(),
+            classKey: activeClass.value.key,
+            date: dtString,
+            status: attendanceStatus.value,
+            teacher: currentTeacher.value?.key || '',
+            checkIns: [],
+            location: meetingLocation.value || undefined,
+          });
+        }
+      }
+      current = date.addToDate(current, { days: 1 });
+    }
+  } else {
+    meetingsToCreate.push({
       key: uid(),
       classKey: activeClass.value.key,
       date: dateTimeString,
@@ -97,34 +163,40 @@ const createAttendanceRecord = async () => {
       teacher: currentTeacher.value?.key || '',
       checkIns: [],
       location: meetingLocation.value || undefined,
-    };
-
-    await attendanceStore.newClassMeeting(newMeeting);
-
-    Notify.create({
-      message: 'Attendance record created successfully',
-      color: 'green',
-      icon: 'check_circle',
-      position: 'top',
-      timeout: 3000,
     });
-
-    void router.push({
-      name: 'teacherClass',
-      params: { classKey: activeClass.value.key },
-    });
-  } catch (error) {
-    console.error('Error creating attendance record:', error);
-    Notify.create({
-      message: 'Failed to create attendance record',
-      color: 'negative',
-      icon: 'error',
-      position: 'top',
-      timeout: 3000,
-    });
-  } finally {
-    isSubmitting.value = false;
   }
+  const notify = Notify.create({
+    message: `creating ${meetingsToCreate.length} attendance records`,
+    color: 'green',
+    icon: 'check_circle',
+    position: 'top',
+    timeout: 0,
+  });
+  for (let index = 0; index < meetingsToCreate.length; index++) {
+    const meeting = meetingsToCreate[index];
+    if (!meeting) continue;
+    try {
+      await attendanceStore.newClassMeeting(JSON.parse(JSON.stringify(meeting)));
+      notify({
+        message: `${meeting?.date} attendance record created successfully`,
+        color: 'green',
+        icon: 'check_circle',
+      });
+    } catch (error) {
+      console.error('Error creating attendance record:', error);
+      Notify.create({
+        message: 'Failed to create attendance record',
+        color: 'negative',
+        icon: 'error',
+        position: 'top',
+        timeout: 3000,
+      });
+    }
+  }
+  void router.push({
+    name: 'teacherClass',
+    params: { classKey: activeClass.value.key },
+  });
 };
 
 async function useMyLocation() {
@@ -133,7 +205,12 @@ async function useMyLocation() {
       Notify.create({ message: 'Geolocation is not supported by your browser', color: 'negative' });
       return;
     }
-    const pos = await new Promise<GeolocationPosition>((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 5000 }));
+    const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 5000,
+      }),
+    );
     meetingLocation.value = { lat: pos.coords.latitude, lng: pos.coords.longitude };
     Notify.create({ message: 'Meeting location set', color: 'positive' });
   } catch (err) {
@@ -211,12 +288,65 @@ const cancelAndGoBack = () => {
               </div>
 
               <div class="col-12">
-                <div class="row q-col-gutter-md items-center">
-                  <div class="col-6">
-                    <q-btn label="Use My Location" color="secondary" @click="useMyLocation" />
+                <q-toggle v-model="isRecurring" label="Recurring Meeting" />
+              </div>
+
+              <div v-if="isRecurring" class="col-12">
+                <q-card flat bordered class="q-pa-sm bg-grey-1">
+                  <div class="row q-col-gutter-md">
+                    <div class="col-12 col-md-6">
+                      <q-select
+                        filled
+                        v-model="recurrenceType"
+                        :options="[
+                          { label: 'Daily', value: 'daily' },
+                          { label: 'Weekly', value: 'weekly' },
+                        ]"
+                        label="Recurrence Type"
+                        emit-value
+                        map-options
+                      />
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <q-input
+                        filled
+                        v-model="recurrenceEndDate"
+                        label="End Date"
+                        mask="####/##/##"
+                      >
+                        <template v-slot:append>
+                          <q-icon name="event" class="cursor-pointer">
+                            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                              <q-date v-model="recurrenceEndDate" mask="YYYY/MM/DD">
+                                <div class="row items-center justify-end">
+                                  <q-btn v-close-popup label="Close" color="primary" flat />
+                                </div>
+                              </q-date>
+                            </q-popup-proxy>
+                          </q-icon>
+                        </template>
+                      </q-input>
+                    </div>
+                    <div v-if="recurrenceType === 'weekly'" class="col-12">
+                      <div class="text-caption q-mb-sm">Select Days:</div>
+                      <q-option-group
+                        v-model="selectedWeekDays"
+                        :options="weekDayOptions"
+                        type="checkbox"
+                        inline
+                      />
+                    </div>
                   </div>
+                </q-card>
+              </div>
+
+              <div class="col-12">
+                <div class="row q-col-gutter-md items-center">
                   <div class="col-6 text-right">
-                    <div v-if="meetingLocation">Location: {{ meetingLocation?.lat.toFixed(5) }}, {{ meetingLocation?.lng.toFixed(5) }}</div>
+                    <div v-if="meetingLocation">
+                      Location: {{ meetingLocation?.lat.toFixed(5) }},
+                      {{ meetingLocation?.lng.toFixed(5) }}
+                    </div>
                   </div>
                 </div>
                 <q-select
@@ -237,7 +367,10 @@ const cancelAndGoBack = () => {
             </div>
 
             <div class="q-mt-md">
-              <q-banner v-if="existingMeetingFound" class="bg-negative text-white q-mb-md">
+              <q-banner
+                v-if="existingMeetingFound && !isRecurring"
+                class="bg-negative text-white q-mb-md"
+              >
                 An attendance record already exists for this date and time.
               </q-banner>
 
@@ -257,7 +390,7 @@ const cancelAndGoBack = () => {
                 label="Create Attendance Record"
                 color="primary"
                 :loading="isSubmitting"
-                :disable="existingMeetingFound"
+                :disable="existingMeetingFound && !isRecurring"
               />
             </div>
           </q-form>

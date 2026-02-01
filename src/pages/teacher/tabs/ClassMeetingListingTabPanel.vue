@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { Notify, QTableColumn, useQuasar } from 'quasar';
+import { date, Notify, QTableColumn, useQuasar } from 'quasar';
 import { ClassMeetingModel } from 'src/models/attendance.models';
-import { onUnmounted, ref } from 'vue';
+import { computed, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AttendanceDetailsDialog from 'src/components/AttendanceDetailsDialog.vue';
 import { useAttendanceStore } from 'src/stores/attendance-store';
@@ -13,7 +13,9 @@ const attendanceColumns: QTableColumn[] = [
     required: true,
     label: 'Date',
     align: 'left',
-    field: 'date',
+    field(record: ClassMeetingModel) {
+      return date.formatDate(record.date, 'YYYY/MM/DD MMM ddd');
+    },
     sortable: true,
   },
   {
@@ -44,7 +46,7 @@ const attendanceStore = useAttendanceStore();
 const attendanceHistory = ref<ClassMeetingModel[]>([]);
 const selectedMeeting = ref<ClassMeetingModel | null>(null);
 const showAttendanceDetails = ref(false);
-
+const showPastMeetings = ref(false);
 const props = defineProps<{
   cls: ClassModel;
   name: string;
@@ -55,7 +57,7 @@ function streamAttendanceHistory() {
   if (props.cls.key) {
     const unsubscribe = attendanceStore.streamClassMeetings(props.cls.key, {
       onSnapshot(meetings) {
-        attendanceHistory.value = meetings;
+        attendanceHistory.value = meetings.sort((a, b) => a.date.localeCompare(b.date));
       },
     });
     onUnmounted(() => {
@@ -65,7 +67,14 @@ function streamAttendanceHistory() {
     attendanceHistory.value = [];
   }
 }
-
+const meetings = computed(() => {
+  if (showPastMeetings.value) {
+    return attendanceHistory.value;
+  } else {
+    const now = new Date();
+    return attendanceHistory.value.filter((item) => date.getDateDiff(item.date, now, 'days') >= 0);
+  }
+});
 function viewAttendanceDetails(meeting: ClassMeetingModel) {
   selectedMeeting.value = meeting;
   showAttendanceDetails.value = true;
@@ -117,6 +126,7 @@ function cancelMeeting(meeting: ClassMeetingModel) {
   <q-tab-panel :name="name">
     <div class="q-mb-md flex justify-between items-center">
       <div class="text-h6">Meetings ({{ attendanceHistory.length }})</div>
+      <q-toggle v-model="showPastMeetings" label="Past Meetings" />
       <q-btn
         color="primary"
         icon="add"
@@ -126,7 +136,7 @@ function cancelMeeting(meeting: ClassMeetingModel) {
     </div>
 
     <q-table
-      :rows="attendanceHistory"
+      :rows="meetings"
       :columns="attendanceColumns"
       row-key="key"
       :rows-per-page-options="[30, 40, 50]"
