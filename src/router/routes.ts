@@ -8,9 +8,9 @@ import HomePage from 'pages/HomePage.vue';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    component: () => MainLayout,
+    component: MainLayout,
     children: [
-      { name: 'home', path: '', component: () => HomePage },
+      { name: 'home', path: '', component: HomePage },
       { name: 'classes', path: 'class', component: () => import('pages/ClassPage.vue') },
       { name: 'attendance', path: 'attendance/:classKey', component: () => import('pages/AttendancePage.vue') },
     ]
@@ -28,12 +28,12 @@ const routes: RouteRecordRaw[] = [
   // Teacher Page
   {
     path: '/teacher',
-    component: () => TeacherLayout,
+    component: TeacherLayout,
     children: [
-      { name: 'teacher', path: '', component: () => TeacherDashboard, meta: { teacher: true } },
-      { name: 'teacherClass', path: 'class/:classKey', component: () => TeacherClassPage, meta: { teacher: true } },
+      { name: 'teacher', path: '', component: TeacherDashboard, meta: { teacher: true } },
+      { name: 'teacherClass', path: 'class/:classKey', component: TeacherClassPage, meta: { teacher: true } },
       { name: 'createAttendance', path: 'class/:classKey/create-attendance', component: () => import('pages/teacher/CreateAttendancePage.vue'), meta: { teacher: true } },
-      { name: 'rollCall', path: 'class/:classKey/meeting/:meetingKey/roll-call', component: () => RollCallPage, meta: { teacher: true } },
+      { name: 'rollCall', path: 'class/:classKey/meeting/:meetingKey/roll-call', component: RollCallPage, meta: { teacher: true } },
     ]
   },
   // Supervisor Page
