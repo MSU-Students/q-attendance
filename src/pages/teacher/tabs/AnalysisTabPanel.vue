@@ -5,6 +5,7 @@ import { useAttendanceStore } from 'src/stores/attendance-store';
 import { computed, ref, onUnmounted } from 'vue';
 import { calculateStudentAttendance } from 'src/utils/attendance-utils';
 import StudentAttendanceCharts from 'src/components/StudentAttendanceCharts.vue';
+import { date } from 'quasar';
 
 const props = defineProps<{
   name: string;
@@ -19,7 +20,8 @@ if (props.cls.key) {
   const unsubscribe = attendanceStore.streamClassMeetings(props.cls.key, {
     loadAllCheckIns: true,
     onSnapshot(meetings: ClassMeetingModel[]) {
-      attendanceHistory.value = meetings;
+      const now = new Date();
+      attendanceHistory.value = meetings.filter((m) => date.getDateDiff(m.date, now, 'days') < 0);
     },
   });
   onUnmounted(() => {
@@ -60,7 +62,7 @@ const attendanceStats = computed(() => {
 
   students.forEach((student) => {
     const stats = calculateStudentAttendance(meetings, student.ownerKey || '');
-    
+
     studentStats.push({
       name: student.fullName || 'Unknown',
       presentCount: stats.presentCount,
