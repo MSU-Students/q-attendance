@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { date, Notify, QTableColumn, useQuasar } from 'quasar';
 import { ClassMeetingModel } from 'src/models/attendance.models';
-import { computed, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AttendanceDetailsDialog from 'src/components/AttendanceDetailsDialog.vue';
 import { useAttendanceStore } from 'src/stores/attendance-store';
@@ -51,8 +51,11 @@ const props = defineProps<{
   cls: ClassModel;
   name: string;
 }>();
-
-streamAttendanceHistory();
+onMounted(async () => {
+  streamAttendanceHistory();
+  const schedules = await attendanceStore.loadClassMeetings(props.cls.key);
+  attendanceHistory.value = schedules.sort((a, b) => a.date.localeCompare(b.date));
+});
 function streamAttendanceHistory() {
   if (props.cls.key) {
     const unsubscribe = attendanceStore.streamClassMeetings(props.cls.key, {
