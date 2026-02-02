@@ -52,9 +52,9 @@ const props = defineProps<{
   name: string;
 }>();
 onMounted(async () => {
-  streamAttendanceHistory();
   const schedules = await attendanceStore.loadClassMeetings(props.cls.key);
   attendanceHistory.value = schedules.sort((a, b) => a.date.localeCompare(b.date));
+  streamAttendanceHistory();
 });
 function streamAttendanceHistory() {
   if (props.cls.key) {

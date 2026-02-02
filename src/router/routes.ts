@@ -1,11 +1,16 @@
 import type { RouteRecordRaw } from 'vue-router';
-
+import TeacherLayout from 'layouts/TeacherLayout.vue';
+import TeacherDashboard from 'pages/teacher/TeacherDashboard.vue';
+import TeacherClassPage from 'pages/teacher/TeacherClassPage.vue';
+import RollCallPage from 'pages/teacher/RollCallPage.vue';
+import MainLayout from 'layouts/MainLayout.vue';
+import HomePage from 'pages/HomePage.vue';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    component: () => import('layouts/MainLayout.vue'),
+    component: () => MainLayout,
     children: [
-      { name: 'home', path: '', component: () => import('pages/HomePage.vue') },
+      { name: 'home', path: '', component: () => HomePage },
       { name: 'classes', path: 'class', component: () => import('pages/ClassPage.vue') },
       { name: 'attendance', path: 'attendance/:classKey', component: () => import('pages/AttendancePage.vue') },
     ]
@@ -23,12 +28,12 @@ const routes: RouteRecordRaw[] = [
   // Teacher Page
   {
     path: '/teacher',
-    component: () => import('layouts/TeacherLayout.vue'),
+    component: () => TeacherLayout,
     children: [
-      { name: 'teacher', path: '', component: () => import('pages/teacher/TeacherDashboard.vue'), meta: { teacher: true } },
-      { name: 'teacherClass', path: 'class/:classKey', component: () => import('pages/teacher/TeacherClassPage.vue'), meta: { teacher: true } },
+      { name: 'teacher', path: '', component: () => TeacherDashboard, meta: { teacher: true } },
+      { name: 'teacherClass', path: 'class/:classKey', component: () => TeacherClassPage, meta: { teacher: true } },
       { name: 'createAttendance', path: 'class/:classKey/create-attendance', component: () => import('pages/teacher/CreateAttendancePage.vue'), meta: { teacher: true } },
-      { name: 'rollCall', path: 'class/:classKey/meeting/:meetingKey/roll-call', component: () => import('pages/teacher/RollCallPage.vue'), meta: { teacher: true } },
+      { name: 'rollCall', path: 'class/:classKey/meeting/:meetingKey/roll-call', component: () => RollCallPage, meta: { teacher: true } },
     ]
   },
   // Supervisor Page

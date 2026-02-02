@@ -1,7 +1,9 @@
+import { Collection, Table } from 'dexie';
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import { CollectionName, CollectionTypes } from 'src/services/collection.type';
 import { localDb } from 'src/services/dexie-service';
 import { Condition, copyObject, firebaseService } from 'src/services/firebase-service';
+import { IndexType } from 'typescript';
 
 export const usePersistentStore = defineStore('persistent', {
   state: () => ({
@@ -184,16 +186,69 @@ export const usePersistentStore = defineStore('persistent', {
         return results;
       } else {
         const table = localDb.table(collectionName);
-        const query = condition ? table.where(condition) : table;
+        const query = condition ? filterWithCondition(table as any, condition) : table;
         return (await query.toArray()).filter(d => !d.deleted_offline);
       }
     },
     async countRecords<C extends CollectionName>(collectionName: C, path?: string, condition?: Record<string, string>): Promise<number> {
-      return firebaseService.countRecords(collectionName, path, condition as any);
+      if (this.online) {
+        return firebaseService.countRecords(collectionName, path, condition as any);
+      } else {
+        return 0;
+      }
     }
   },
 });
 
 if (import.meta.hot) {
   import.meta.hot.accept(acceptHMRUpdate(usePersistentStore, import.meta.hot));
+}
+
+function filterWithCondition<C extends CollectionName>(table: Table<any, IndexType, any>, condition: Partial<Record<keyof CollectionTypes[C], any>>) {
+  const pure = Object.values(condition).every((c) => typeof c != 'object');
+  if (pure) {
+    return table.where(condition);
+  } else {
+    const keys = Object.keys(condition);
+    const firstProp = keys.shift() as string;
+    const firstCondition = (condition as Record<string, any>)[firstProp];
+    const operators = Object.keys(firstCondition);
+    const query = evalOperator(firstProp, operators.shift()!, firstCondition);
+    const subQuery = evalExtraOperators(operators, firstProp, firstCondition, query!);
+    return keys.reduce((query: Collection<any, IndexType, any>, prop: string) => {
+      const con = (condition as any)[prop];
+      return evalExtraOperators(Object.keys(con), prop, con, query);
+    }, subQuery);
+  }
+  function evalExtraOperators(operators: string[], prop: string, condition: any, query: Collection<any, IndexType, any>) {
+    return operators.reduce((q, operator) => {
+      return q.and((item: any) => {
+        if (operator === '==') {
+          return item[prop] === condition[operator];
+        } else if (operator === '!=') {
+          return item[prop] !== condition[operator];
+        } else if (operator === '>') {
+          return item[prop] > condition[operator];
+        } else if (operator === '<') {
+          return item[prop] < condition[operator];
+        } else {
+          return false;
+        }
+      });
+    }, query);
+  }
+
+  function evalOperator(prop: string, operator: string, condition: any) {
+    if (operator === 'in') {
+      return table.where(prop).anyOf(condition[operator]);
+    } else if (operator === '==') {
+      return table.where(prop).equals(condition[operator]);
+    } else if (operator === '>') {
+      return table.where(prop).above(condition[operator]);
+    } else if (operator === '<') {
+      return table.where(prop).below(condition[operator]);
+    } else if (operator === '!=') {
+      return table.where(prop).notEqual(condition[operator]);
+    }
+  }
 }
