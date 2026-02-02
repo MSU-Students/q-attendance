@@ -280,15 +280,23 @@ export const useAttendanceStore = defineStore('attendance', {
         const existingRecord = await persistentStore.getRecord('check-ins', payload.student, path);
         const marked = existingRecord?.status == 'check-in' || payload.status != 'check-in';
         const now = date.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss');
-        await persistentStore.updateRecord('check-ins', payload.student, {
-          status: payload.status,
-          checkInTime: existingRecord?.checkInTime || now,
-          markedInTime: marked ? now : ''
-        }, path);
+        if (existingRecord) {
+          await persistentStore.updateRecord('check-ins', payload.student, {
+            status: payload.status,
+            checkInTime: existingRecord?.checkInTime || now,
+            markedInTime: marked ? now : ''
+          }, path);
+        } else {
+          await persistentStore.createRecord('check-ins', {
+            status: payload.status,
+            checkInTime: now,
+            markedInTime: marked ? now : '',
+            key: payload.student
+          }, path);
+        }
         return true;
       } catch (error) {
         console.error('Error updating check-in status:', error);
-        throw error;
       }
     },
 

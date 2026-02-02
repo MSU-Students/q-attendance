@@ -286,34 +286,38 @@ function reopenAttendanceSession() {
               </div>
             </q-item-section>
 
-            <q-item-section side class="row items-center">
-              <q-badge :color="getStatusColor(student.status)">
+            <q-item-section side style="width: 100px">
+              <q-badge :color="getStatusColor(student.status)" class="col">
                 {{ getStatusLabel(student.status) }}
               </q-badge>
-              <q-space />
               <q-badge v-if="student.validation?.status === 'valid'" color="green"
                 >Validated</q-badge
               >
               <q-badge
+                class="col"
                 v-else-if="student.validation?.status === 'invalid'"
                 color="red"
-                title="{{ student.validation?.reason }}"
+                :title="student.validation?.reason"
                 >Invalid</q-badge
               >
-              <q-btn
-                flat
-                small
-                dense
-                icon="replay"
-                @click.stop.prevent="revalidateCheckIn(student.key)"
-              />
-              <q-btn
-                flat
-                small
-                dense
-                icon="edit"
-                @click.stop.prevent="overrideValidation(student.key)"
-              />
+              <div>
+                <q-btn
+                  flat
+                  round
+                  small
+                  dense
+                  icon="replay"
+                  @click.stop.prevent="revalidateCheckIn(student.key)"
+                />
+                <q-btn
+                  flat
+                  round
+                  small
+                  dense
+                  icon="edit"
+                  @click.stop.prevent="overrideValidation(student.key)"
+                />
+              </div>
             </q-item-section>
           </q-item>
           <q-item-label v-if="absentStudents.length" header class="text-h5 q-mb-md bg-primary"
