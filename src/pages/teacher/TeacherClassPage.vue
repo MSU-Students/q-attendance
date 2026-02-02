@@ -137,6 +137,7 @@ const importStudents = async (courseId: string) => {
           student: {
             key: uid(),
             ownerKey: '',
+            status: 'active',
             email: student.profile.emailAddress,
             fullName: student.profile.name?.fullName || 'Unknown',
             role: 'student',

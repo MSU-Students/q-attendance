@@ -39,6 +39,7 @@ async function saveStudent() {
       student: {
         key: uid(),
         ownerKey: '',
+        status: 'active',
         email: studentEmail.value,
         fullName: studentName.value,
         role: 'student',
@@ -106,6 +107,7 @@ async function studentsFromClipboard() {
                       email: student.email,
                       fullName: student.fullName,
                       role: 'student',
+                      status: 'active',
                     },
                   })
                   .then(resolve, resolve);
