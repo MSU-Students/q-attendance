@@ -2,7 +2,7 @@
 import { date, Notify, QTableColumn, useQuasar } from 'quasar';
 import { ClassMeetingModel } from 'src/models/attendance.models';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import AttendanceDetailsDialog from 'src/components/AttendanceDetailsDialog.vue';
 import { useAttendanceStore } from 'src/stores/attendance-store';
 import { ClassModel } from 'src/models/class.models';
@@ -41,30 +41,39 @@ const attendanceColumns: QTableColumn[] = [
   },
 ];
 const $q = useQuasar();
+const $route = useRoute();
 const $router = useRouter();
 const attendanceStore = useAttendanceStore();
 const attendanceHistory = ref<ClassMeetingModel[]>([]);
 const selectedMeeting = ref<ClassMeetingModel | null>(null);
 const showAttendanceDetails = ref(false);
 const showPastMeetings = ref(false);
-const props = defineProps<{
+defineProps<{
   cls: ClassModel;
   name: string;
 }>();
 onMounted(async () => {
-  const schedules = await attendanceStore.loadClassMeetings(props.cls.key);
-  attendanceHistory.value = schedules.sort((a, b) => a.date.localeCompare(b.date));
-  streamAttendanceHistory();
+  await streamAttendanceHistory();
 });
-function streamAttendanceHistory() {
-  if (props.cls.key) {
-    const unsubscribe = attendanceStore.streamClassMeetings(props.cls.key, {
+async function streamAttendanceHistory() {
+  if (typeof $route.params.classKey == 'string') {
+    const schedules = await attendanceStore.loadClassMeetings($route.params.classKey);
+    attendanceHistory.value = schedules.sort((a, b) => a.date.localeCompare(b.date));
+    const unsubscribe = attendanceStore.streamClassMeetings($route.params.classKey, {
       onSnapshot(meetings) {
-        attendanceHistory.value = meetings.sort((a, b) => a.date.localeCompare(b.date));
+        if (meetings.length >= 0) {
+          attendanceHistory.value = meetings.sort((a, b) => a.date.localeCompare(b.date));
+        }
       },
     });
     onUnmounted(() => {
       unsubscribe();
+    });
+    $router.afterEach((to) => {
+      unsubscribe();
+      if (to.name == 'teacherClass') {
+        streamAttendanceHistory();
+      }
     });
   } else {
     attendanceHistory.value = [];

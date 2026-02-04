@@ -11,6 +11,7 @@ import { useClassStore } from 'src/stores/class-store';
 
 const $q = useQuasar();
 const route = useRoute();
+const $router = useRouter();
 const classStore = useClassStore();
 
 const tab = ref('attendance');
@@ -28,11 +29,19 @@ onMounted(async () => {
   if (typeof route.params?.classKey === 'string') {
     currentClass.value = await classStore.loadClass(route.params.classKey);
   }
+  $router.afterEach(async (to) => {
+    if (
+      to.name == 'teacherClass' &&
+      typeof to.params.classKey == 'string' &&
+      currentClass.value?.key != to.params.classKey
+    ) {
+      currentClass.value = await classStore.loadClass(to.params.classKey);
+    }
+  });
 });
 //classCode
 const showClassCodeDialog = ref(false);
 const maximizeClassCodeDialog = ref(false);
-const $router = useRouter();
 const classCode = computed(() => {
   const link = $router.resolve({
     name: 'student',
