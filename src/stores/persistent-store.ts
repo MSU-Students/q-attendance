@@ -237,6 +237,8 @@ function filterWithCondition<C extends CollectionName>(table: Table<any, IndexTy
             return item[prop] <= condition[operator];
           } else if (operator === '>=') {
             return item[prop] >= condition[operator];
+          } else if (operator == 'in' && Array.isArray(condition[operator])) {
+            return condition[operator].includes(item[prop]);
           } else {
             return false;
           }
