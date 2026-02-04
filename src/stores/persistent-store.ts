@@ -221,21 +221,30 @@ function filterWithCondition<C extends CollectionName>(table: Table<any, IndexTy
     }, subQuery);
   }
   function evalExtraOperators(operators: string[], prop: string, condition: any, query: Collection<any, IndexType, any>) {
-    return operators.reduce((q, operator) => {
-      return q.and((item: any) => {
-        if (operator === '==') {
-          return item[prop] === condition[operator];
-        } else if (operator === '!=') {
-          return item[prop] !== condition[operator];
-        } else if (operator === '>') {
-          return item[prop] > condition[operator];
-        } else if (operator === '<') {
-          return item[prop] < condition[operator];
-        } else {
-          return false;
-        }
-      });
-    }, query);
+    if (operators.length) {
+      return query.filter((item => {
+        return operators.reduce((val, operator) => {
+          if (!val) return false;
+          if (operator === '==') {
+            return item[prop] === condition[operator];
+          } else if (operator === '!=') {
+            return item[prop] !== condition[operator];
+          } else if (operator === '>') {
+            return item[prop] > condition[operator];
+          } else if (operator === '<') {
+            return item[prop] < condition[operator];
+          } else if (operator === '<=') {
+            return item[prop] <= condition[operator];
+          } else if (operator === '>=') {
+            return item[prop] >= condition[operator];
+          } else {
+            return false;
+          }
+        }, true)
+      }));
+    } else {
+      return query;
+    }
   }
 
   function evalOperator(prop: string, operator: string, condition: any) {
@@ -245,8 +254,12 @@ function filterWithCondition<C extends CollectionName>(table: Table<any, IndexTy
       return table.where(prop).equals(condition[operator]);
     } else if (operator === '>') {
       return table.where(prop).above(condition[operator]);
+    } else if (operator === '>=') {
+      return table.where(prop).aboveOrEqual(condition[operator]);
     } else if (operator === '<') {
       return table.where(prop).below(condition[operator]);
+    } else if (operator === '<=') {
+      return table.where(prop).belowOrEqual(condition[operator]);
     } else if (operator === '!=') {
       return table.where(prop).notEqual(condition[operator]);
     }
