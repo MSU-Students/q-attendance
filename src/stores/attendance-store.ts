@@ -83,11 +83,11 @@ export const useAttendanceStore = defineStore('attendance', {
         return [];
       }
     },
-    async loadMeetings(classKeys: string[], targetDate: string | Date) {
+    async loadMeetings(classKeys: string[], targetDate: string | Date, targetEndDate?: Date) {
       const persistentStore = usePersistentStore();
       const startDate = new Date(targetDate);
       startDate.setHours(0, 0, 0);
-      const endDate = new Date(targetDate);
+      const endDate = new Date(targetEndDate || targetDate);
       endDate.setHours(23, 59, 59);
       const records = await persistentStore.findRecords('meetings', undefined, {
         classKey: { 'in': classKeys },

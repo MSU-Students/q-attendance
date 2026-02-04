@@ -14,7 +14,7 @@ const attendanceColumns: QTableColumn[] = [
     label: 'Date',
     align: 'left',
     field(record: ClassMeetingModel) {
-      return date.formatDate(record.date, 'YYYY/MM/DD MMM ddd');
+      return date.formatDate(record.date, 'YYYY/MM/DD ddd hh:mmA');
     },
     sortable: true,
   },

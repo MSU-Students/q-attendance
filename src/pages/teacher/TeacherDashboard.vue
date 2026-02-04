@@ -30,7 +30,8 @@ const teacherClasses = computed<ClassToday[]>(() => {
       ...cls,
       meetings: meetings.value
         .filter((m) => m.classKey == cls.key)
-        .sort((a, b) => a.date.localeCompare(b.date)),
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .slice(0, 2),
     }))
     .sort((a, b) => {
       if (b.meetings.length == 0 && a.meetings.length) {
@@ -50,7 +51,10 @@ onMounted(async () => {
   await keepingStore.loadUserKeeping(authStore.teacherAccount?.ownerKey || '');
   window.addEventListener('open-create-class-dialog', addNewClass);
   const classKeys = teacherClasses.value.map((cls) => cls.key);
-  meetings.value = await attendanceStore.loadMeetings(classKeys, new Date());
+  const now = new Date();
+  const endOfWeek = new Date();
+  endOfWeek.setDate(endOfWeek.getDate() + 7 - endOfWeek.getDay());
+  meetings.value = await attendanceStore.loadMeetings(classKeys, now, endOfWeek);
 });
 
 onUnmounted(() => {
@@ -352,7 +356,7 @@ function parseMsuClassList(file: File) {
               rounded
               v-for="meeting in theClass.meetings"
               :key="meeting.key"
-              >{{ date.formatDate(meeting.date, 'hh:mm A') }}</q-btn
+              >{{ date.formatDate(meeting.date, 'ddd hh:mm A') }}</q-btn
             >
           </q-card-actions>
         </q-card>
