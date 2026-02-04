@@ -61,8 +61,12 @@ export const useAttendanceStore = defineStore('attendance', {
     async loadClassMeetings(classKey: string, condition?: { student?: string | undefined }) {
       try {
         const persistentStore = usePersistentStore();
+        const endOfWeek = new Date();
+        endOfWeek.setDate(endOfWeek.getDate() + 7 - endOfWeek.getDay());
+        endOfWeek.setHours(23, 59, 59);
         const records = await persistentStore.findRecords('meetings', undefined, {
-          classKey: { '==': classKey }
+          classKey: { '==': classKey },
+          date: { '<=': date.formatDate(endOfWeek, 'YYYY/MM/DD') }
         });
         const classMeetings = await Promise.all(records.map(async m => {
           m.checkIns = [];
@@ -104,8 +108,11 @@ export const useAttendanceStore = defineStore('attendance', {
       onSnapshot: (meetings: ClassMeetingModel[]) => void | Promise<void>
     }) {
       const persistentStore = usePersistentStore();
+      const endOfWeek = new Date();
+      endOfWeek.setDate(endOfWeek.getDate() + 7 - endOfWeek.getDay());
+      endOfWeek.setHours(23, 59, 59);
       return firebaseService.streamRecords('meetings', {
-        condition: { classKey: { '==': classKey } },
+        condition: { classKey: { '==': classKey }, 'date': { '<=': date.formatDate(endOfWeek, 'YYYY/MM/DD') } },
         async onSnapshot(records) {
           const meetings = await Promise.all(records.map(async (m) => {
             m.checkIns = [];

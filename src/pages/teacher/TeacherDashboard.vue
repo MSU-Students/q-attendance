@@ -288,19 +288,15 @@ function parseMsuClassList(file: File) {
     </div>
 
     <div class="row q-col-gutter-md">
-      <div
-        class="boxes"
-        v-for="theClass in teacherClasses"
-        :key="String(theClass.key)"
-        @click="navigateToClass(theClass)"
-      >
-        <q-card class="card cursor-pointer" @click="navigateToClass(theClass)">
+      <div class="boxes" v-for="theClass in teacherClasses" :key="String(theClass.key)">
+        <q-card class="card">
           <div
-            class="banner"
+            class="banner cursor-pointer"
             :style="{
               backgroundColor: getRandomColor(theClass.key || ''),
               backgroundImage: `url(${getRandomPattern(theClass.key || '')})`,
             }"
+            @click="navigateToClass(theClass)"
           >
             <div class="banner-content">
               <span class="avatar">
@@ -354,6 +350,13 @@ function parseMsuClassList(file: File) {
               dense
               icon="event"
               rounded
+              :to="{
+                name: 'rollCall',
+                params: {
+                  classKey: theClass.key,
+                  meetingKey: meeting.key,
+                },
+              }"
               v-for="meeting in theClass.meetings"
               :key="meeting.key"
               >{{ date.formatDate(meeting.date, 'ddd hh:mm A') }}</q-btn

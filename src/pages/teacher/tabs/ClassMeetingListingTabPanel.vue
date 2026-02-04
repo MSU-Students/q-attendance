@@ -1,11 +1,12 @@
 <script lang="ts" setup>
 import { date, Notify, QTableColumn, useQuasar } from 'quasar';
 import { ClassMeetingModel } from 'src/models/attendance.models';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AttendanceDetailsDialog from 'src/components/AttendanceDetailsDialog.vue';
 import { useAttendanceStore } from 'src/stores/attendance-store';
 import { ClassModel } from 'src/models/class.models';
+import { Unsubscribe } from 'firebase/firestore';
 
 const attendanceColumns: QTableColumn[] = [
   {
@@ -55,30 +56,30 @@ defineProps<{
 onMounted(async () => {
   await streamAttendanceHistory();
 });
+const unSubscribe = ref<Unsubscribe>();
 async function streamAttendanceHistory() {
   if (typeof $route.params.classKey == 'string') {
     const schedules = await attendanceStore.loadClassMeetings($route.params.classKey);
     attendanceHistory.value = schedules.sort((a, b) => a.date.localeCompare(b.date));
-    const unsubscribe = attendanceStore.streamClassMeetings($route.params.classKey, {
+    if (unSubscribe.value) {
+      unSubscribe.value();
+    }
+    unSubscribe.value = attendanceStore.streamClassMeetings($route.params.classKey, {
       onSnapshot(meetings) {
         if (meetings.length >= 0) {
           attendanceHistory.value = meetings.sort((a, b) => a.date.localeCompare(b.date));
         }
       },
     });
-    onUnmounted(() => {
-      unsubscribe();
-    });
-    $router.afterEach((to) => {
-      unsubscribe();
-      if (to.name == 'teacherClass') {
-        streamAttendanceHistory();
-      }
-    });
   } else {
     attendanceHistory.value = [];
   }
 }
+$router.afterEach((to) => {
+  if (to.name == 'teacherClass') {
+    streamAttendanceHistory();
+  }
+});
 const meetings = computed(() => {
   if (showPastMeetings.value) {
     return attendanceHistory.value;
