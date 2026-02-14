@@ -135,6 +135,7 @@ export const useAttendanceStore = defineStore('attendance', {
       })
     },
     streamCheckIns(meetingKey: string, onSnapshot: (meetings: MeetingCheckInModel[]) => void | Promise<void>) {
+      firebaseService.findRecords('check-ins', `/meetings/${meetingKey}`).then(onSnapshot);
       return firebaseService.streamRecords('check-ins', {
         path: `/meetings/${meetingKey}`,
         onSnapshot(records) {
