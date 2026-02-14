@@ -13,7 +13,7 @@ export interface ClassMeetingModel extends Entity {
 }
 export interface MeetingCheckInModel extends Entity {
   checkInTime: string;
-  status: 'check-in' | 'absent' | 'late' | 'present';
+  status: 'check-in' | 'absent' | 'late' | 'present' | 'excused';
   markedInTime?: string;
   comments?: CheckInComments[];
   validation?: {

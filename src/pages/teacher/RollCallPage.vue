@@ -20,6 +20,7 @@ const currentClass = ref<ClassModel>();
 const currentMeeting = ref<ClassMeetingModel>();
 const studentCheckIns = ref<MeetingCheckInModel[]>([]);
 const enrolledStudents = computed(() => currentClass.value?.enrolled || []);
+const studentsCallStack = ref<UserModel[]>([]);
 const isSubmitting = ref(false);
 const selectedStatuses = ref<Record<StudentKey, MeetingCheckInModel['status']>>({});
 const activeClass = computed(() => {
@@ -31,7 +32,7 @@ const activeClass = computed(() => {
 onMounted(async () => {
   const meetingKey = route.params.meetingKey as string;
   const classKey = route.params.classKey as string;
-
+  studentsCallStack.value = [];
   if (!meetingKey || !classKey) {
     Notify.create({
       message: 'Invalid meeting or class information',
@@ -52,6 +53,16 @@ onMounted(async () => {
     initializeSelectedStatuses();
   });
 });
+function randomizeStudents() {
+  const students = [...enrolledStudents.value];
+  const random: UserModel[] = [];
+  while (students.length) {
+    const randomIndex = Math.floor(Math.random() * students.length);
+    const [randomStudent] = students.splice(randomIndex, 1);
+    random.push(randomStudent!);
+  }
+  return random;
+}
 
 const initializeSelectedStatuses = () => {
   if (!currentMeeting.value) return;
@@ -254,6 +265,7 @@ function cancelRollCall() {
 }
 //roll-call dialog states
 const showDialog = ref(false);
+const skipPresent = ref(true);
 const currentStudent = ref<UserModel>();
 const currentCheckIn = ref<MeetingCheckInModel>();
 function selectNextStudent() {
@@ -261,12 +273,12 @@ function selectNextStudent() {
 
   // Find starting point
   if (currentStudent.value) {
-    nextIndex = enrolledStudents.value.findIndex((s) => s.key == currentStudent.value?.key) + 1;
+    nextIndex = studentsCallStack.value.findIndex((s) => s.key == currentStudent.value?.key) + 1;
   }
 
   // Get next student in sequence
-  if (nextIndex < enrolledStudents.value.length) {
-    const student = enrolledStudents.value[nextIndex];
+  if (nextIndex < studentsCallStack.value.length) {
+    const student = studentsCallStack.value[nextIndex];
     if (student) {
       currentStudent.value = { ...student };
       currentCheckIn.value = studentCheckIns.value.find((c) => c.key == student.key);
@@ -297,6 +309,12 @@ function onCallStatus(status: MeetingCheckInModel['status'] | 'later') {
   }
 }
 function startRollCall() {
+  studentsCallStack.value = randomizeStudents();
+  if (skipPresent.value) {
+    studentsCallStack.value = studentsCallStack.value.filter(
+      (s) => selectedStatuses.value[s.key] !== 'present',
+    );
+  }
   selectNextStudent();
   if (currentStudent.value && activeClass.value) {
     showDialog.value = true;
@@ -408,7 +426,18 @@ function startRollCall() {
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn color="negative" label="Cancel" :disable="isSubmitting" @click="cancelRollCall" />
+          <q-toggle v-model="skipPresent">
+            <span v-if="$q.screen.gt.sm">Skip Present</span>
+            <q-tooltip v-else>Skip Present</q-tooltip>
+          </q-toggle>
+          <q-space />
+          <q-btn
+            color="negative"
+            :label="$q.screen.gt.sm ? 'Cancel' : ''"
+            :icon="$q.screen.gt.sm ? undefined : 'close'"
+            :disable="isSubmitting"
+            @click="cancelRollCall"
+          />
           <q-btn color="orange" label="Save" :loading="isSubmitting" @click="saveRollCall(false)" />
           <q-btn
             color="primary"

@@ -113,7 +113,7 @@ export const useAttendanceStore = defineStore('attendance', {
       endOfWeek.setHours(23, 59, 59);
       return firebaseService.streamRecords('meetings', {
         condition: { classKey: { '==': classKey }, 'date': { '<=': date.formatDate(endOfWeek, 'YYYY/MM/DD') } },
-        async onSnapshot(records) {
+        onSnapshot: async (records) => {
           const meetings = await Promise.all(records.map(async (m) => {
             m.checkIns = [];
             m.checkInCount = 0;
@@ -131,6 +131,7 @@ export const useAttendanceStore = defineStore('attendance', {
             return m;
           }));
           void options.onSnapshot(meetings);
+          this.meetings = meetings;
         },
       })
     },

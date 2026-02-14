@@ -5,6 +5,8 @@ import { UserModel } from 'src/models/user.models';
 import { useClassStore } from 'src/stores/class-store';
 import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
+import AttendanceReportDialog from '../AttendanceReportDialog.vue';
+import { useAttendanceStore } from 'src/stores/attendance-store';
 
 const props = defineProps<{
   name: string;
@@ -13,6 +15,7 @@ const props = defineProps<{
 const $q = useQuasar();
 const $route = useRoute();
 const classStore = useClassStore();
+const attendanceStore = useAttendanceStore();
 const activeClass = computed(() => {
   if ($route.params?.classKey === props.currentClass.key) {
     return props.currentClass;
@@ -25,11 +28,22 @@ const enrolledStudents = computed(() => {
 const showNewStudentDialog = ref(false);
 const studentName = ref('');
 const studentEmail = ref('');
-
+const showAttendanceReport = ref(false);
+const currentStudent = ref<UserModel>();
 function enrollStudent() {
   showNewStudentDialog.value = true;
   studentName.value = '';
   studentEmail.value = '';
+}
+
+async function analyzeStudent(student: UserModel) {
+  showAttendanceReport.value = false;
+  if (!activeClass.value) return;
+  currentStudent.value = student;
+  await attendanceStore.loadClassMeetings(activeClass.value.key, {
+    student: student.key,
+  });
+  showAttendanceReport.value = true;
 }
 
 async function saveStudent() {
@@ -188,15 +202,17 @@ async function studentsFromClipboard() {
           </q-avatar>
         </q-item-section>
 
-        <q-item-section>
+        <q-item-section class="cursor-pointer" @click="analyzeStudent(student)">
           <q-item-label>{{ student.fullName }}</q-item-label>
           <q-item-label caption>{{ student.email }}</q-item-label>
         </q-item-section>
 
         <q-item-section side>
-          <q-btn color="red" icon="delete" dense round @click="removeStudent(student)">
-            <q-tooltip>Remove Student</q-tooltip>
-          </q-btn>
+          <div>
+            <q-btn color="red" icon="delete" dense round @click="removeStudent(student)">
+              <q-tooltip>Remove Student</q-tooltip>
+            </q-btn>
+          </div>
         </q-item-section>
       </q-item>
 
@@ -248,5 +264,13 @@ async function studentsFromClipboard() {
         </q-form>
       </q-card>
     </q-dialog>
+    <template v-if="activeClass && currentStudent">
+      <AttendanceReportDialog
+        v-model="showAttendanceReport"
+        :target-class="activeClass"
+        :current-student="currentStudent"
+        :all-meetings="attendanceStore.meetings"
+      />
+    </template>
   </q-tab-panel>
 </template>
