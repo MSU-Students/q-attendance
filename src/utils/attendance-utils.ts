@@ -11,10 +11,14 @@ export interface StudentAttendanceStats {
 }
 
 export interface AttendanceStatus {
-  status: 'drop' | 'drop-risk' | 'perfect' | 'good' | 'no-data';
+  status: 'warning' | 'drop' | 'critical' | 'perfect' | 'good' | 'no-data';
   color: string;
   icon: string;
   conclusion: string;
+  absentCount: number;
+  lateCount: number;
+  consecutiveAbsent: number;
+  maxConsecutiveAbsences: number;
 }
 
 export function calculateStudentAttendance(
@@ -92,6 +96,10 @@ export function getAttendanceStatus(
       color: 'grey',
       icon: 'help_outline',
       conclusion: 'No available data for attendance analysis',
+      absentCount: 0,
+      consecutiveAbsent: 0,
+      lateCount: 0,
+      maxConsecutiveAbsences: 0
     };
   }
 
@@ -114,6 +122,10 @@ export function getAttendanceStatus(
       color: 'red',
       icon: 'error',
       conclusion,
+      absentCount,
+      lateCount,
+      consecutiveAbsent,
+      maxConsecutiveAbsences
     };
   }
 
@@ -132,10 +144,14 @@ export function getAttendanceStatus(
     }
 
     return {
-      status: 'drop-risk',
+      status: 'critical',
       color: 'orange',
       icon: 'warning',
       conclusion,
+      consecutiveAbsent,
+      absentCount,
+      lateCount,
+      maxConsecutiveAbsences
     };
   }
 
@@ -146,6 +162,10 @@ export function getAttendanceStatus(
       color: 'blue',
       icon: 'star',
       conclusion: `${studentName.split(' ')[0]} has perfect attendance`,
+      consecutiveAbsent,
+      absentCount,
+      lateCount,
+      maxConsecutiveAbsences
     };
   }
 
@@ -155,6 +175,10 @@ export function getAttendanceStatus(
     color: 'green',
     icon: 'check_circle',
     conclusion: `${studentName.split(' ')[0]} has a good attendance status`,
+    consecutiveAbsent,
+    absentCount,
+    lateCount,
+    maxConsecutiveAbsences
   };
 }
 

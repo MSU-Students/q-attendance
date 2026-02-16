@@ -206,6 +206,10 @@ async function studentsFromClipboard() {
           <q-item-label>{{ student.fullName }}</q-item-label>
           <q-item-label caption>{{ student.email }}</q-item-label>
         </q-item-section>
+        <q-item-section>
+          {{ student.reportStatus }} ({{ student.consecutiveAbsences }} /
+          {{ student.totalAbsences }})
+        </q-item-section>
 
         <q-item-section side>
           <div>

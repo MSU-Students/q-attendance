@@ -1,6 +1,6 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import { usePersistentStore } from './persistent-store';
-import { ClassModel, StudentUserModel, UserModel } from 'src/models';
+import { ClassModel, StudentEnrollment, StudentUserModel, UserModel } from 'src/models';
 import { useKeepingStore } from './keeping-store';
 
 export const useClassStore = defineStore('class', {
@@ -83,6 +83,17 @@ export const useClassStore = defineStore('class', {
         });
       }
     },
+    async updateStudentStatus(payload: { class: ClassModel; student: StudentEnrollment }) {
+      const persistentStore = usePersistentStore();
+      const student = await persistentStore.getRecord('enrolled', payload.student.key, `/classes/${payload.class.key}`);
+      if (student) {
+        student.reportStatus = payload.student.reportStatus;
+        student.totalAbsences = payload.student.totalAbsences;
+        student.consecutiveAbsences = payload.student.consecutiveAbsences;
+        student.totalTardiness = payload.student.totalTardiness;
+        await persistentStore.updateRecord('enrolled', payload.student.key, student, `/classes/${payload.class.key}`);
+      }
+    },
     async join(payload: { class: ClassModel; teacher: UserModel }) {
       const persistentStore = usePersistentStore();
       const [teacher, cls] = await Promise.all([
@@ -116,8 +127,6 @@ export const useClassStore = defineStore('class', {
         ) {
           return false;
         }
-
-
         await persistentStore.updateRecord(
           'enrolled',
           enrolled.key,

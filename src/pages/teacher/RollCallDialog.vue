@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
-import { ClassModel } from 'src/models/class.models';
-import { UserModel } from 'src/models/user.models';
+import { ClassModel, StudentEnrollment } from 'src/models/class.models';
 import { useAttendanceStore } from 'src/stores/attendance-store';
-import { calculateStudentAttendance, getAttendanceStatus } from 'src/utils/attendance-utils';
+import {
+  AttendanceStatus,
+  calculateStudentAttendance,
+  getAttendanceStatus,
+} from 'src/utils/attendance-utils';
 import { computed, ref } from 'vue';
 import { date } from 'quasar';
 import AttendanceReportDialog from './AttendanceReportDialog.vue';
+import { useClassStore } from 'src/stores/class-store';
 
 const props = defineProps<{
   targetClass: ClassModel;
   targetMeeting: ClassMeetingModel;
-  currentStudent: UserModel;
+  currentStudent: StudentEnrollment;
   currentCheckIn?: MeetingCheckInModel | undefined;
 }>();
 
@@ -39,13 +43,20 @@ const attendanceStats = computed(() => {
 });
 
 // Get attendance status
-const attendanceStatus = computed(() => {
+const attendanceStatus = computed<AttendanceStatus>(() => {
   if (!attendanceStats.value) {
     return {
       status: 'no-data',
       color: 'grey',
       icon: 'help_outline',
       conclusion: 'No available data',
+      absentCount: 0,
+      attendanceRate: 0,
+      consecutiveAbsent: 0,
+      lateCount: 0,
+      maxConsecutiveAbsences: 0,
+      presentCount: 0,
+      totalMeetings: 0,
     };
   }
   return getAttendanceStatus(
@@ -56,9 +67,27 @@ const attendanceStatus = computed(() => {
   );
 });
 
-defineEmits<{
+const emits = defineEmits<{
   (event: 'callStatus', status: MeetingCheckInModel['status'] | 'later'): void;
 }>();
+
+async function callStatus(status: MeetingCheckInModel['status'] | 'later') {
+  const stats = attendanceStatus.value;
+  if (stats.status !== 'no-data' && status === 'later') {
+    const classStore = useClassStore();
+    await classStore.updateStudentStatus({
+      class: props.targetClass,
+      student: {
+        ...props.currentStudent,
+        reportStatus: stats.status,
+        consecutiveAbsences: stats.consecutiveAbsent,
+        totalAbsences: stats.absentCount,
+        totalTardiness: stats.lateCount,
+      },
+    });
+  }
+  emits('callStatus', status);
+}
 </script>
 <template>
   <q-dialog :model-value="show" :maximized="$q.screen.lt.sm">
@@ -93,7 +122,7 @@ defineEmits<{
                 <div class="text-body2 text-grey-6 text-uppercase text-weight-medium">Status:</div>
                 <q-chip
                   :color="
-                    attendanceStatus.status === 'drop-risk'
+                    attendanceStatus.status === 'critical'
                       ? 'orange'
                       : attendanceStatus.status === 'drop'
                         ? 'red'
@@ -124,17 +153,17 @@ defineEmits<{
         </div>
       </q-card-section>
       <q-card-actions class="q-gutter-lg" align="evenly">
-        <q-btn color="info" @click="$emit('callStatus', 'later')">Call Later</q-btn>
+        <q-btn color="info" @click="callStatus('later')">Call Later</q-btn>
         <q-btn
           color="negative"
           :outline="currentCheckIn?.status == 'absent'"
-          @click="$emit('callStatus', 'absent')"
+          @click="callStatus('absent')"
           >Absent</q-btn
         >
         <q-btn
           color="warning"
           :outline="currentCheckIn?.status == 'late'"
-          @click="$emit('callStatus', 'late')"
+          @click="callStatus('late')"
           >Late</q-btn
         >
       </q-card-actions>
@@ -143,7 +172,7 @@ defineEmits<{
           color="positive"
           class="full-width"
           :outline="currentCheckIn?.status == 'present'"
-          @click="$emit('callStatus', 'present')"
+          @click="callStatus('present')"
           >Present</q-btn
         >
       </q-card-section>

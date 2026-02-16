@@ -4,10 +4,10 @@ import { date, Dialog, Notify } from 'quasar';
 import { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
 import { useAttendanceStore } from 'src/stores/attendance-store';
 import { useRoute, useRouter } from 'vue-router';
-import { ClassModel } from 'src/models/class.models';
+import { ClassModel, StudentEnrollment } from 'src/models/class.models';
 import RollCallDialog from './RollCallDialog.vue';
-import { UserModel } from 'src/models/user.models';
 import { useClassStore } from 'src/stores/class-store';
+import { getAttendanceStatus } from 'src/utils/attendance-utils';
 
 type StudentKey = string;
 
@@ -20,7 +20,7 @@ const currentClass = ref<ClassModel>();
 const currentMeeting = ref<ClassMeetingModel>();
 const studentCheckIns = ref<MeetingCheckInModel[]>([]);
 const enrolledStudents = computed(() => currentClass.value?.enrolled || []);
-const studentsCallStack = ref<UserModel[]>([]);
+const studentsCallStack = ref<StudentEnrollment[]>([]);
 const isSubmitting = ref(false);
 const selectedStatuses = ref<Record<StudentKey, MeetingCheckInModel['status']>>({});
 const activeClass = computed(() => {
@@ -55,7 +55,7 @@ onMounted(async () => {
 });
 function randomizeStudents() {
   const students = [...enrolledStudents.value];
-  const random: UserModel[] = [];
+  const random: StudentEnrollment[] = [];
   while (students.length) {
     const randomIndex = Math.floor(Math.random() * students.length);
     const [randomStudent] = students.splice(randomIndex, 1);
@@ -107,11 +107,37 @@ function formatDate(dateString: string) {
     return dateString;
   }
 }
-function updateStudentStatus(studentKey: string, status: MeetingCheckInModel['status']) {
+async function updateStudentStatus(studentKey: string, status: MeetingCheckInModel['status']) {
   selectedStatuses.value[studentKey] = status;
   if (currentCheckIn.value) {
     currentCheckIn.value.status = status;
   }
+  if (!currentClass.value || !currentStudent.value) return;
+
+  const meetings = await attendanceStore.loadClassMeetings(currentClass.value?.key || '', {
+    student: studentKey,
+  });
+  const stats = getAttendanceStatus(
+    {
+      absentCount: currentStudent.value.totalAbsences || 0,
+      consecutiveAbsent: currentStudent.value.consecutiveAbsences || 0,
+      attendanceRate: 0,
+      lateCount: currentStudent.value.totalTardiness || 0,
+      maxConsecutiveAbsences: currentStudent.value.consecutiveAbsences || 0,
+      presentCount: 0,
+      totalMeetings: 0,
+    },
+    currentStudent.value.fullName || '',
+    meetings,
+    studentKey,
+  );
+  await classStore.updateStudentStatus({
+    class: currentClass.value,
+    student: {
+      ...currentStudent.value,
+      totalAbsences: stats.absentCount,
+    },
+  });
 }
 async function saveRollCall(isSubmit: boolean = false) {
   if (isSubmit) {
@@ -266,7 +292,7 @@ function cancelRollCall() {
 //roll-call dialog states
 const showDialog = ref(false);
 const skipPresent = ref(true);
-const currentStudent = ref<UserModel>();
+const currentStudent = ref<StudentEnrollment>();
 const currentCheckIn = ref<MeetingCheckInModel>();
 function selectNextStudent() {
   let nextIndex = 0;
@@ -292,15 +318,15 @@ function selectNextStudent() {
     showDialog.value = false;
   }
 }
-function onCallStatus(status: MeetingCheckInModel['status'] | 'later') {
+async function onCallStatus(status: MeetingCheckInModel['status'] | 'later') {
   if (!currentStudent.value) return;
   switch (status) {
     case 'absent':
     case 'check-in':
     case 'late':
     case 'present':
-      updateStudentStatus(currentStudent.value.key, status);
       selectNextStudent();
+      await updateStudentStatus(currentStudent.value.key, status);
       break;
     case 'later':
     default:

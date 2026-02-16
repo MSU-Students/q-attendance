@@ -1,14 +1,14 @@
 import {
   ClassMeetingModel,
   ClassModel,
-  MeetingCheckInModel, OrgEventModel, OrgModel, RecordKeepingModel, UserModel
+  MeetingCheckInModel, OrgEventModel, OrgModel, RecordKeepingModel, StudentEnrollment, UserModel
 } from 'src/models';
 
 export type CollectionTypes = {
   users: UserModel;
   classes: ClassModel;
   'teachers': UserModel;
-  'enrolled': UserModel;
+  'enrolled': StudentEnrollment;
   meetings: ClassMeetingModel;
   'check-ins': MeetingCheckInModel,
   'class-keepings': RecordKeepingModel,
