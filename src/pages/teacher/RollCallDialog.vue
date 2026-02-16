@@ -192,6 +192,7 @@ async function callStatus(status: MeetingCheckInModel['status'] | 'later') {
       :target-class="targetClass"
       :current-student="currentStudent"
       :all-meetings="allMeetings"
+      skip-saving
     />
   </q-dialog>
 </template>

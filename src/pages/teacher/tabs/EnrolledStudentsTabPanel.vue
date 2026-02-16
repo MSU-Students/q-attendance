@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { uid, useQuasar } from 'quasar';
-import { ClassModel } from 'src/models/class.models';
+import { ClassModel, StudentEnrollment } from 'src/models/class.models';
 import { UserModel } from 'src/models/user.models';
 import { useClassStore } from 'src/stores/class-store';
 import { computed, ref } from 'vue';
@@ -29,14 +29,14 @@ const showNewStudentDialog = ref(false);
 const studentName = ref('');
 const studentEmail = ref('');
 const showAttendanceReport = ref(false);
-const currentStudent = ref<UserModel>();
+const currentStudent = ref<StudentEnrollment>();
 function enrollStudent() {
   showNewStudentDialog.value = true;
   studentName.value = '';
   studentEmail.value = '';
 }
 
-async function analyzeStudent(student: UserModel) {
+async function analyzeStudent(student: StudentEnrollment) {
   showAttendanceReport.value = false;
   if (!activeClass.value) return;
   currentStudent.value = student;

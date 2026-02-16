@@ -1,6 +1,6 @@
 <template>
   <!-- Attendance Report Dialog -->
-  <q-dialog v-model="showAttendanceReport">
+  <q-dialog v-model="showAttendanceReport" @before-hide="onClose">
     <q-card style="min-width: 500px; max-width: 700px">
       <q-card-section class="bg-primary text-white q-pa-md">
         <div class="text-h6 text-center">
@@ -330,16 +330,22 @@
 </template>
 <script setup lang="ts">
 import { date } from 'quasar';
-import { ClassMeetingModel, ClassModel, UserModel } from 'src/models';
-import { calculateStudentAttendance, getAttendanceStatus } from 'src/utils/attendance-utils';
+import { ClassMeetingModel, ClassModel, StudentEnrollment } from 'src/models';
+import { useClassStore } from 'src/stores/class-store';
+import {
+  AttendanceStatus,
+  calculateStudentAttendance,
+  getAttendanceStatus,
+} from 'src/utils/attendance-utils';
 import { computed } from 'vue';
 import { ref } from 'vue';
 
 const showAttendanceReport = defineModel<boolean>({ default: false });
 const props = defineProps<{
   targetClass: ClassModel;
-  currentStudent: UserModel;
+  currentStudent: StudentEnrollment;
   allMeetings: ClassMeetingModel[];
+  skipSaving?: boolean;
 }>();
 const activeTab = ref('calendar');
 const currentMonth = ref(new Date());
@@ -353,7 +359,7 @@ const attendanceStatus = computed(() => {
       color: 'grey',
       icon: 'help_outline',
       conclusion: 'No available data',
-    };
+    } as AttendanceStatus;
   }
   return getAttendanceStatus(
     attendanceStats.value,
@@ -366,7 +372,21 @@ const attendanceStatus = computed(() => {
 const concludedMeetings = computed(() => {
   return props.allMeetings.filter((m) => m.status == 'concluded');
 });
-
+async function onClose() {
+  if (attendanceStats.value && !props.skipSaving) {
+    await useClassStore().updateStudentStatus({
+      class: props.targetClass,
+      student: {
+        ...props.currentStudent,
+        reportStatus: attendanceStatus.value.status as StudentEnrollment['reportStatus'],
+        totalAbsences: attendanceStats.value.absentCount,
+        totalTardiness: attendanceStats.value.lateCount,
+        consecutiveAbsences:
+          attendanceStats.value.maxConsecutiveAbsences || attendanceStats.value.consecutiveAbsent,
+      },
+    });
+  }
+}
 // Navigate calendar months
 function previousMonth() {
   const newDate = new Date(currentMonth.value);

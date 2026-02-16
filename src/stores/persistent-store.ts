@@ -83,7 +83,7 @@ export const usePersistentStore = defineStore('persistent', {
     },
     async getRecord<C extends CollectionName>(collectionName: C, key: string, path?: string): Promise<CollectionTypes[C] | undefined> {
       if (this.online) {
-        const record = await firebaseService.getRecord(collectionName, key) as CollectionTypes[C];
+        const record = await firebaseService.getRecord(collectionName, key, path) as CollectionTypes[C];
         if (!record) {
           return;
         }
