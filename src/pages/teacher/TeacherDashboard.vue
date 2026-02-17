@@ -53,7 +53,11 @@ onMounted(async () => {
   const classKeys = teacherClasses.value.map((cls) => cls.key);
   const now = new Date();
   const endOfWeek = new Date();
-  endOfWeek.setDate(endOfWeek.getDate() + 7 - endOfWeek.getDay());
+  if (endOfWeek.getDay() >= 6) {
+    endOfWeek.setDate(endOfWeek.getDate() + 7);
+  } else {
+    endOfWeek.setDate(endOfWeek.getDate() + 7 - endOfWeek.getDay());
+  }
   meetings.value = await attendanceStore.loadMeetings(classKeys, now, endOfWeek);
 });
 
@@ -350,6 +354,7 @@ function parseMsuClassList(file: File) {
               dense
               icon="event"
               rounded
+              :color="meeting.status == 'cancelled' ? 'negative' : 'positive'"
               :to="{
                 name: 'rollCall',
                 params: {

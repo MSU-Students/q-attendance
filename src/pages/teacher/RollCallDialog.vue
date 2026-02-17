@@ -10,7 +10,6 @@ import {
 import { computed, ref } from 'vue';
 import { date } from 'quasar';
 import AttendanceReportDialog from './AttendanceReportDialog.vue';
-import { useClassStore } from 'src/stores/class-store';
 
 const props = defineProps<{
   targetClass: ClassModel;
@@ -71,20 +70,20 @@ const emits = defineEmits<{
   (event: 'callStatus', status: MeetingCheckInModel['status'] | 'later'): void;
 }>();
 
-async function callStatus(status: MeetingCheckInModel['status'] | 'later') {
+function callStatus(status: MeetingCheckInModel['status'] | 'later') {
   const stats = attendanceStatus.value;
   if (stats.status !== 'no-data' && status === 'later') {
-    const classStore = useClassStore();
-    await classStore.updateStudentStatus({
-      class: props.targetClass,
-      student: {
-        ...props.currentStudent,
-        reportStatus: stats.status,
-        consecutiveAbsences: stats.consecutiveAbsent,
-        totalAbsences: stats.absentCount,
-        totalTardiness: stats.lateCount,
-      },
-    });
+    // const classStore = useClassStore();
+    // await classStore.updateStudentStatus({
+    //   class: props.targetClass,
+    //   student: {
+    //     ...props.currentStudent,
+    //     reportStatus: stats.status,
+    //     consecutiveAbsences: stats.consecutiveAbsent,
+    //     totalAbsences: stats.absentCount,
+    //     totalTardiness: stats.lateCount,
+    //   },
+    // });
   }
   emits('callStatus', status);
 }
