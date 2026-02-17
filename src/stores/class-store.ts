@@ -2,6 +2,7 @@ import { defineStore, acceptHMRUpdate } from 'pinia';
 import { usePersistentStore } from './persistent-store';
 import { ClassModel, StudentEnrollment, StudentUserModel, UserModel } from 'src/models';
 import { useKeepingStore } from './keeping-store';
+import { useAttendanceStore } from './attendance-store';
 
 export const useClassStore = defineStore('class', {
   state: () => ({}),
@@ -50,6 +51,46 @@ export const useClassStore = defineStore('class', {
           teacher: teacher,
         });
       }
+    },
+    async merge(payload: { class: ClassModel; records: StudentEnrollment[] }) {
+      const persistentStore = usePersistentStore();
+      const attendanceStore = useAttendanceStore();
+      const hostingRecord = payload.records.find(student => student.emailVerified) ||
+        payload.records[0]!;
+      const deletingRecords = payload.records.filter(student => student.key !== hostingRecord.key);
+      const deletingRecordKeys = deletingRecords.map(s => s.key);
+      const concludedMeetings = (await attendanceStore.loadClassMeetings(payload.class.key)).filter(m => m.status == 'concluded');
+      await Promise.all(concludedMeetings.map(async (m) => {
+        const checkIns = await persistentStore.findRecords('check-ins', `/meetings/${m.key}`, {
+          key: { 'in': [...deletingRecordKeys, hostingRecord.key] }
+        });
+        const deletingCheckIns = checkIns.filter(c => c.key !== hostingRecord.key);
+        const hostCheckIn = checkIns.find(c => c.key === hostingRecord.key)
+        const attendance = deletingCheckIns.find(record => record.status != 'check-in');
+        if (hostCheckIn && attendance
+          && hostCheckIn.status !== attendance.status
+          && !(['present', 'late'].includes(hostCheckIn.status))
+        ) {
+          await attendanceStore.updateCheckInStatus({
+            meetingKey: m.key,
+            checkInKey: hostCheckIn.key,
+            status: attendance.status,
+            student: hostingRecord.key
+          });
+        } else if (!hostCheckIn && attendance) {
+          await attendanceStore.checkInAttendance({
+            meeting: m,
+            status: attendance.status,
+            student: hostingRecord.key,
+          });
+        }
+        return await Promise.all(deletingCheckIns.map(async (c) => {
+          await persistentStore.deleteRecord('check-ins', c.key, `/meetings/${m.key}`)
+        }))
+      }));
+      return await Promise.all(deletingRecordKeys.map(async (c) => {
+        await persistentStore.deleteRecord('enrolled', c, `/classes/${payload.class.key}`)
+      }))
     },
 
     async enroll(payload: { class: ClassModel; student: StudentUserModel }) {

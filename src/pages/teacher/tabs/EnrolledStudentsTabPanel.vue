@@ -12,6 +12,7 @@ const props = defineProps<{
   name: string;
   currentClass: ClassModel;
 }>();
+const emits = defineEmits(['refresh']);
 const $q = useQuasar();
 const $route = useRoute();
 const classStore = useClassStore();
@@ -23,17 +24,42 @@ const activeClass = computed(() => {
   return undefined;
 });
 const enrolledStudents = computed(() => {
-  return (activeClass.value?.enrolled || []).filter((e) => e.status == 'active');
+  return (activeClass.value?.enrolled || [])
+    .filter((e) => e.status == 'active')
+    .sort((a, b) => a.email.localeCompare(b.email));
 });
 const showNewStudentDialog = ref(false);
 const studentName = ref('');
 const studentEmail = ref('');
 const showAttendanceReport = ref(false);
+const enableMerging = ref(false);
+const mergingSelection = ref<StudentEnrollment[]>([]);
 const currentStudent = ref<StudentEnrollment>();
 function enrollStudent() {
   showNewStudentDialog.value = true;
   studentName.value = '';
   studentEmail.value = '';
+}
+
+async function mergeStudentRecords() {
+  const notify = $q.notify({
+    message: 'Merging',
+    progress: true,
+    timeout: 0,
+    position: 'center',
+    group: false,
+  });
+  await classStore.merge({
+    class: props.currentClass,
+    records: mergingSelection.value,
+  });
+  mergingSelection.value = [];
+  enableMerging.value = false;
+  notify({
+    timeout: 100,
+    message: 'Done Merging',
+  });
+  emits('refresh');
 }
 
 async function analyzeStudent(student: StudentEnrollment) {
@@ -180,6 +206,22 @@ async function studentsFromClipboard() {
               <q-item-label>Add Student</q-item-label>
             </q-item-section>
           </q-item>
+          <q-item v-if="mergingSelection.length === 0">
+            <q-checkbox v-model="enableMerging" label="Enable Merging" />
+          </q-item>
+          <q-item
+            v-else-if="mergingSelection.length"
+            clickable
+            v-close-popup
+            @click="mergeStudentRecords"
+          >
+            <q-item-section avatar>
+              <q-icon name="merge" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>Merge Records</q-item-label>
+            </q-item-section>
+          </q-item>
           <q-item>
             <slot />
           </q-item>
@@ -190,7 +232,8 @@ async function studentsFromClipboard() {
     <q-list bordered separator>
       <q-item v-for="student in enrolledStudents" :key="String(student.key)" class="q-my-sm">
         <q-item-section avatar>
-          <q-avatar color="primary" text-color="white">
+          <q-checkbox v-if="enableMerging" v-model="mergingSelection" :val="student" />
+          <q-avatar v-else color="primary" text-color="white">
             <img
               v-if="student.avatar"
               :src="student.avatar"

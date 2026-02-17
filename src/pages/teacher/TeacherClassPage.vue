@@ -26,19 +26,22 @@ const activeClass = computed(() => {
 const currentClass = ref<ClassModel>();
 
 onMounted(async () => {
-  if (typeof route.params?.classKey === 'string') {
-    currentClass.value = await classStore.loadClass(route.params.classKey);
-  }
+  await refresh();
   $router.afterEach(async (to) => {
     if (
       to.name == 'teacherClass' &&
       typeof to.params.classKey == 'string' &&
       currentClass.value?.key != to.params.classKey
     ) {
-      currentClass.value = await classStore.loadClass(to.params.classKey);
+      await refresh();
     }
   });
 });
+async function refresh() {
+  if (typeof route.params?.classKey === 'string') {
+    currentClass.value = await classStore.loadClass(route.params.classKey);
+  }
+}
 //classCode
 const showClassCodeDialog = ref(false);
 const maximizeClassCodeDialog = ref(false);
@@ -239,7 +242,7 @@ function fallbackCopyTextToClipboard(text: string) {
     <q-separator />
 
     <q-tab-panels v-model="tab" v-if="activeClass" animated>
-      <EnrolledStudentsTabPanel :current-class="activeClass" name="students">
+      <EnrolledStudentsTabPanel :current-class="activeClass" name="students" @refresh="refresh">
         <q-btn
           flat
           icon="cloud_download"
