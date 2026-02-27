@@ -71,7 +71,7 @@ const initializeSelectedStatuses = () => {
   //assume everyone is absent first
   enrolledStudents.value.forEach((student) => {
     if (student.key) {
-      statusMap[student.key] = 'absent';
+      statusMap[student.key] = statusMap[student.key] || 'absent';
     }
   });
 
@@ -390,6 +390,7 @@ function startRollCall() {
             ]"
             row-key="key"
             :pagination="{ rowsPerPage: 0 }"
+            :grid="$q.screen.lt.sm"
           >
             <template v-slot:body-cell-avatar="props">
               <q-td :props="props">
@@ -447,6 +448,61 @@ function startRollCall() {
                   @click.stop.prevent="overrideValidationForRow(props.row)"
                 />
               </q-td>
+            </template>
+            <template v-slot:item="props">
+              <div class="q-pa-xs col-12 grid-style-transition">
+                <q-card
+                  bordered
+                  flat
+                  :class="props.selected ? ($q.dark.isActive ? 'bg-grey-9' : 'bg-grey-2') : ''"
+                >
+                  <q-card-section>
+                    <q-avatar size="md" color="primary" text-color="white">
+                      <img
+                        v-if="props.row.avatar"
+                        :src="props.row.avatar"
+                        :alt="props.row.fullName ? props.row.fullName[0] : 'S'"
+                      />
+                      <span v-else>
+                        {{ props.row.fullName ? props.row.fullName[0] : 'S' }}
+                      </span>
+                    </q-avatar>
+                    {{ props.row.name }}
+                  </q-card-section>
+                  <q-separator />
+                  <q-list dense>
+                    <q-item
+                      v-for="col in props.cols.filter((col: any) => col.name !== 'name')"
+                      :key="col.name"
+                    >
+                      <q-item-section>
+                        <q-item-label>{{ col.label }}</q-item-label>
+                      </q-item-section>
+                      <q-item-section side>
+                        <q-item-label caption>{{ col.value }}</q-item-label>
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                  <q-card-actions align="center">
+                    <q-btn-toggle
+                      spread
+                      dense
+                      class="full-width"
+                      v-model="selectedStatuses[props.row.key]"
+                      toggle-color="primary"
+                      clearable
+                      toggle-text-color="black"
+                      :options="[
+                        { label: 'Absent', value: 'absent', color: 'red' },
+                        { label: 'Late', value: 'late', color: 'orange' },
+                        { label: 'Excuse', value: 'excused', color: 'green-9' },
+                        { label: 'Present', value: 'present', color: 'green' },
+                      ]"
+                      @update:model-value="updateStudentStatus(props.row.key, $event)"
+                    />
+                  </q-card-actions>
+                </q-card>
+              </div>
             </template>
           </q-table>
         </q-card-section>
