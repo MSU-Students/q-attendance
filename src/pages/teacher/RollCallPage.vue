@@ -29,6 +29,18 @@ const activeClass = computed(() => {
   }
   return undefined;
 });
+const presentCount = computed(() => {
+  return studentsWithStatus.value.filter((c) => c.status == 'present').length;
+});
+const absentCount = computed(() => {
+  return studentsWithStatus.value.filter((c) => c.status == 'absent').length;
+});
+const lateCount = computed(() => {
+  return studentsWithStatus.value.filter((c) => c.status == 'late').length;
+});
+const excusedCount = computed(() => {
+  return studentsWithStatus.value.filter((c) => c.status == 'excused').length;
+});
 onMounted(async () => {
   const meetingKey = route.params.meetingKey as string;
   const classKey = route.params.classKey as string;
@@ -374,6 +386,10 @@ function startRollCall() {
           >
             {{ currentMeeting.status }}
           </q-badge>
+          <q-chip icon="verified_user">{{ presentCount }}</q-chip>
+          <q-chip icon="cancel">{{ absentCount }}</q-chip>
+          <q-chip icon="schedule">{{ lateCount }}</q-chip>
+          <q-chip icon="sick">{{ excusedCount }}</q-chip>
         </q-card-section>
 
         <q-card-section>

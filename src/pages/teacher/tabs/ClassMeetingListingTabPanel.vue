@@ -155,6 +155,16 @@ function cancelMeeting(meeting: ClassMeetingModel) {
       :rows-per-page-options="[30, 40, 50]"
       v-if="attendanceHistory.length > 0"
     >
+      <template v-slot:body-cell-date="props">
+        <q-td :props="props" class="cursor-pointer" @click="startRollCall(props.row)">
+          <q-chip>
+            {{ date.formatDate(props.row.date, 'MMM DD') }}
+          </q-chip>
+          <q-badge floating align="bottom">{{
+            date.formatDate(props.row.date, 'ddd hh:mmA')
+          }}</q-badge>
+        </q-td>
+      </template>
       <template v-slot:body-cell-status="props">
         <q-td :props="props">
           <q-badge
