@@ -488,7 +488,9 @@ function startRollCall() {
                   <q-separator />
                   <q-list dense>
                     <q-item
-                      v-for="col in props.cols.filter((col: any) => col.name !== 'name')"
+                      v-for="col in props.cols.filter(
+                        (col: any) => col.name !== 'name' && col.name !== 'avatar',
+                      )"
                       :key="col.name"
                     >
                       <q-item-section>
