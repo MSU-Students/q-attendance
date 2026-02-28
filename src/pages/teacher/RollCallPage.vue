@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { date, Dialog, Notify } from 'quasar';
+import { date, Dialog, Notify, useQuasar } from 'quasar';
 import { ClassMeetingModel, MeetingCheckInModel } from 'src/models/attendance.models';
 import { useAttendanceStore } from 'src/stores/attendance-store';
 import { useRoute, useRouter } from 'vue-router';
@@ -15,6 +15,7 @@ const route = useRoute();
 const router = useRouter();
 const attendanceStore = useAttendanceStore();
 const classStore = useClassStore();
+const $q = useQuasar();
 
 const currentClass = ref<ClassModel>();
 const currentMeeting = ref<ClassMeetingModel>();
@@ -366,6 +367,26 @@ function startRollCall() {
     });
   }
 }
+function cancelMeeting(meeting: ClassMeetingModel) {
+  $q.notify({
+    timeout: 0,
+    color: 'secondary',
+    textColor: 'primary',
+    position: 'center',
+    message: 'Cancel meeting',
+    caption: `Date: ${meeting.date}`,
+    actions: [
+      {
+        label: 'Proceed',
+        icon: 'arrow_circle_right',
+        handler: async () => {
+          await attendanceStore.cancelMeeting(meeting.key);
+        },
+      },
+      { label: 'Abort', icon: 'cancel' },
+    ],
+  });
+}
 </script>
 
 <template>
@@ -373,7 +394,7 @@ function startRollCall() {
     <div class="q-pa-md">
       <q-card v-if="currentMeeting">
         <q-card-section class="bg-primary text-white">
-          <div class="text-h6">Roll Call: {{ activeClass?.name }}</div>
+          <div class="text-h6">Roll Call: {{ activeClass?.name }} {{ activeClass?.section }}</div>
           <div class="text-subtitle1">{{ formatDate(currentMeeting.date) }}</div>
           <q-badge
             :color="
@@ -386,10 +407,13 @@ function startRollCall() {
           >
             {{ currentMeeting.status }}
           </q-badge>
-          <q-chip icon="verified_user">{{ presentCount }}</q-chip>
-          <q-chip icon="cancel">{{ absentCount }}</q-chip>
-          <q-chip icon="schedule">{{ lateCount }}</q-chip>
-          <q-chip icon="sick">{{ excusedCount }}</q-chip>
+          <q-chip dense icon="verified_user">{{ presentCount }}</q-chip>
+          <q-chip dense icon="cancel">{{ absentCount }}</q-chip>
+          <q-chip dense icon="schedule">{{ lateCount }}</q-chip>
+          <q-chip dense icon="sick">{{ excusedCount }}</q-chip>
+          <q-btn dense class="q-m-sm" icon="delete" @click="cancelMeeting(currentMeeting)"
+            >Cancel Meeting</q-btn
+          >
         </q-card-section>
 
         <q-card-section>
@@ -406,7 +430,7 @@ function startRollCall() {
             ]"
             row-key="key"
             :pagination="{ rowsPerPage: 0 }"
-            :grid="$q.screen.lt.sm"
+            :grid="$q.screen.sm || $q.screen.lt.sm"
           >
             <template v-slot:body-cell-avatar="props">
               <q-td :props="props">
@@ -428,6 +452,7 @@ function startRollCall() {
                   :options="[
                     { label: 'Present', value: 'present', color: 'green' },
                     { label: 'Late', value: 'late', color: 'orange' },
+                    { label: 'Excuse', value: 'excused', color: 'green-9' },
                     { label: 'Absent', value: 'absent', color: 'red' },
                   ]"
                   @update:model-value="updateStudentStatus(props.row.key, $event)"
@@ -533,7 +558,7 @@ function startRollCall() {
           <q-space />
           <q-btn
             color="negative"
-            :label="$q.screen.gt.sm ? 'Cancel' : ''"
+            :label="$q.screen.gt.sm ? 'Back' : ''"
             :icon="$q.screen.gt.sm ? undefined : 'close'"
             :disable="isSubmitting"
             @click="cancelRollCall"
@@ -541,7 +566,7 @@ function startRollCall() {
           <q-btn color="orange" label="Save" :loading="isSubmitting" @click="saveRollCall(false)" />
           <q-btn
             color="primary"
-            label="Submit Roll Call"
+            label="Submit"
             :loading="isSubmitting"
             @click="saveRollCall(true)"
           />

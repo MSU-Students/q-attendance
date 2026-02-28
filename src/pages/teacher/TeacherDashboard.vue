@@ -292,7 +292,7 @@ function parseMsuClassList(file: File) {
     </div>
 
     <div class="row q-col-gutter-md">
-      <div class="boxes" v-for="theClass in teacherClasses" :key="String(theClass.key)">
+      <div class="col-md-6 col-12" v-for="theClass in teacherClasses" :key="String(theClass.key)">
         <q-card class="card">
           <div
             class="banner cursor-pointer"
@@ -318,8 +318,8 @@ function parseMsuClassList(file: File) {
                   </q-item-label>
                 </q-item-section>
               </span>
-              <div class="dots">
-                <q-btn round flat color="white" icon="more_vert" size="sm" @click.stop>
+              <div class="absolute-top-right q-mr-sm q-mt-sm">
+                <q-btn round icon="more_vert" size="sm" @click.stop>
                   <q-menu>
                     <q-list style="min-width: 150px">
                       <q-item clickable v-close-popup @click="copyInviteLink(theClass)">
@@ -458,8 +458,7 @@ function parseMsuClassList(file: File) {
 }
 
 .card {
-  width: 290px;
-  border-radius: 5%;
+  border-radius: 15px;
   background-color: white;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
   transition: transform 0.2s ease;
@@ -476,9 +475,8 @@ function parseMsuClassList(file: File) {
 
 .banner-content {
   display: flex;
-  padding-left: 5%;
-  padding-right: 5%;
-  padding-top: 15%;
+  padding-left: 10px;
+  padding-top: 15px;
 }
 
 .avatar {
@@ -507,16 +505,6 @@ function parseMsuClassList(file: File) {
 .allCards {
   margin-left: 1%;
   margin-top: 2%;
-}
-
-.dots {
-  padding-left: 40%;
-  margin-top: -11%;
-}
-
-.boxes {
-  margin-left: 5px;
-  margin-right: 5px;
 }
 
 .popUpName {

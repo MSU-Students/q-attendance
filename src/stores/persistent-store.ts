@@ -1,4 +1,4 @@
-import { Collection, Table } from 'dexie';
+import Dexie, { Collection, Table } from 'dexie';
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import { CollectionName, CollectionTypes } from 'src/services/collection.type';
 import { localDb } from 'src/services/dexie-service';
@@ -15,50 +15,97 @@ export const usePersistentStore = defineStore('persistent', {
     updateOnlineState(online: boolean) {
       this.online = online;
       if (online) {
-        localDb.tables.map(table => {
+        async function createdRecordHook(record: any, tableName: string) {
+          try {
+            if (record.path) {
+              const path = record.path as string;
+              await firebaseService.createRecord(tableName as keyof CollectionTypes, record, path);
+            } else {
+              await firebaseService.createRecord(tableName as keyof CollectionTypes, record);
+            }
+            if (!record.path) {
+              await localDb.table(tableName).update(record.key, {
+                created_online: new Date()
+              });
+            } else {
+              await localDb.table(tableName).update([record.path, record.key], {
+                created_online: new Date()
+              });
+            }
+          } catch (error) {
+            console.error(error);
+          }
+        }
+        async function updateRecordHook(record: any, tableName: string) {
+          try {
+            const path = record.path as string;
+            await firebaseService.updateRecord(tableName as keyof CollectionTypes, record.key, record, path);
+            if (!record.path) {
+              await localDb.table(tableName).update(record.key, {
+                updated_online: new Date()
+              });
+            } else {
+              await localDb.table(tableName).update([record.path, record.key], {
+                updated_online: new Date()
+              });
+            }
+          } catch (error) {
+            console.error(error);
+          }
+        }
+        async function deleteRecordHook(record: any, tableName: string) {
+          try {
+            const path = record.path as string;
+            await firebaseService.deleteRecord(tableName as keyof CollectionTypes, record.key, path);
+
+            await localDb.table(tableName).delete(record.path ? [record.path, record.key] : record.key);
+          } catch (error) {
+            console.error(error);
+          }
+        }
+        type Update = {
+          table: string;
+          status: 'created' | 'updated' | 'deleted';
+          record: any;
+        }
+        Promise.all(localDb.tables.map(async table => {
           //sync created record offline
-          table.filter((obj => obj.created_online === false))
-            .each(async (record) => {
-              if (record.path) {
-                const path = record.path as string;
-                await firebaseService.createRecord(table.name as keyof CollectionTypes, record, path);
-              } else {
-                await firebaseService.createRecord(table.name as keyof CollectionTypes, record);
-              }
-              if (!record.path) {
-                await localDb.table(table.name).update(record.key, {
-                  created_online: new Date()
-                });
-              } else {
-                await localDb.table(table.name).update([record.path, record.key], {
-                  created_online: new Date()
-                });
-              }
-            });
+          const createdColl = table.filter((obj => obj.created_online === false));
           //sync updated record offline
-          table.filter((obj => obj.updated_online === false))
-            .each(async (record) => {
-              const path = record.path as string;
-              await firebaseService.updateRecord(table.name as keyof CollectionTypes, record.key, record, path);
-              if (!record.path) {
-                await localDb.table(table.name).update(record.key, {
-                  updated_online: new Date()
-                });
-              } else {
-                await localDb.table(table.name).update([record.path, record.key], {
-                  updated_online: new Date()
-                });
+          const updatedColl = table.filter((obj => obj.updated_online === false));
+          const deletedColl = table.filter((obj => !!obj.deleted_offline));
+
+          const [created, updated, deleted] = await Promise.all([
+            createdColl.toArray(),
+            updatedColl.toArray(),
+            deletedColl.toArray()
+          ]);
+          return [...created.map(r => ({
+            table: table.name,
+            status: 'created',
+            record: r
+          } as Update)), ...updated.map(r => ({
+            table: table.name,
+            status: 'updated',
+            record: r
+          } as Update)), ...deleted.map(r => ({
+            table: table.name,
+            status: 'deleted',
+            record: r
+          } as Update))]
+        })).then((updates: Update[][]) => {
+          updates.forEach(update => {
+            update.forEach(recordUpdate => {
+              if (recordUpdate.status == 'created') {
+                createdRecordHook(recordUpdate.record, recordUpdate.table).catch(console.error);
+              } else if (recordUpdate.status == 'updated') {
+                updateRecordHook(recordUpdate.record, recordUpdate.table).catch(console.error);
+              } else if (recordUpdate.status == 'deleted') {
+                deleteRecordHook(recordUpdate.record, recordUpdate.table).catch(console.error);
               }
-            });
-          table.filter((obj => !!obj.deleted_offline))
-            .each(async (record) => {
-              const path = record.path as string;
-              await firebaseService.deleteRecord(table.name as keyof CollectionTypes, record.key, path);
-
-              await localDb.table(table.name).delete(record.path ? [record.path, record.key] : record.key);
-
-            });
-        })
+            })
+          })
+        });
       }
     },
     async createRecord<C extends CollectionName>(collectionName: C, record: CollectionTypes[C], path?: string): Promise<CollectionTypes[C] | undefined> {
@@ -186,7 +233,8 @@ export const usePersistentStore = defineStore('persistent', {
         return results;
       } else {
         const table = localDb.table(collectionName);
-        const query = condition ? filterWithCondition(table as any, condition) : table;
+        const query = condition ? filterWithCondition(table as any, condition, path) : path ? table
+          .where(['path+key']).between([path, Dexie.minKey], [path, Dexie.maxKey]) : table;
         return (await query.toArray()).filter(d => !d.deleted_offline);
       }
     },
@@ -204,7 +252,7 @@ if (import.meta.hot) {
   import.meta.hot.accept(acceptHMRUpdate(usePersistentStore, import.meta.hot));
 }
 
-function filterWithCondition<C extends CollectionName>(table: Table<any, IndexType, any>, condition: Partial<Record<keyof CollectionTypes[C], any>>) {
+function filterWithCondition<C extends CollectionName>(table: Table<any, IndexType, any>, condition: Partial<Record<keyof CollectionTypes[C], any>>, path?: string) {
   const pure = Object.values(condition).every((c) => typeof c != 'object');
   if (pure) {
     return table.where(condition);
@@ -213,7 +261,8 @@ function filterWithCondition<C extends CollectionName>(table: Table<any, IndexTy
     const firstProp = keys.shift() as string;
     const firstCondition = (condition as Record<string, any>)[firstProp];
     const operators = Object.keys(firstCondition);
-    const query = evalOperator(firstProp, operators.shift()!, firstCondition);
+    const query = path ? table.where(['path+key']).between([path, Dexie.minKey], [path, Dexie.maxKey]) :
+      evalOperator(firstProp, operators.shift()!, firstCondition);
     const subQuery = evalExtraOperators(operators, firstProp, firstCondition, query!);
     return keys.reduce((query: Collection<any, IndexType, any>, prop: string) => {
       const con = (condition as any)[prop];
