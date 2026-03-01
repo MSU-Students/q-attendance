@@ -307,14 +307,16 @@ const showDialog = ref(false);
 const skipPresent = ref(true);
 const currentStudent = ref<StudentEnrollment>();
 const currentCheckIn = ref<MeetingCheckInModel>();
-function selectNextStudent() {
+function selectNextStudent(reverse?: boolean) {
   let nextIndex = 0;
 
   // Find starting point
   if (currentStudent.value) {
-    nextIndex = studentsCallStack.value.findIndex((s) => s.key == currentStudent.value?.key) + 1;
+    nextIndex =
+      studentsCallStack.value.findIndex((s) => s.key == currentStudent.value?.key) +
+      (reverse ? -1 : 1);
   }
-
+  nextIndex = nextIndex >= 0 ? nextIndex : 0;
   // Get next student in sequence
   if (nextIndex < studentsCallStack.value.length) {
     const student = studentsCallStack.value[nextIndex];
@@ -331,7 +333,7 @@ function selectNextStudent() {
     showDialog.value = false;
   }
 }
-async function onCallStatus(status: MeetingCheckInModel['status'] | 'later') {
+async function onCallStatus(status: MeetingCheckInModel['status'] | 'later' | 'back') {
   if (!currentStudent.value) return;
   switch (status) {
     case 'absent':
@@ -340,6 +342,9 @@ async function onCallStatus(status: MeetingCheckInModel['status'] | 'later') {
     case 'present':
       selectNextStudent();
       await updateStudentStatus(currentStudent.value.key, status);
+      break;
+    case 'back':
+      selectNextStudent(true);
       break;
     case 'later':
     default:
@@ -567,10 +572,17 @@ function cancelMeeting(meeting: ClassMeetingModel) {
           <q-btn
             color="primary"
             label="Submit"
+            class="q-mr-lg"
             :loading="isSubmitting"
             @click="saveRollCall(true)"
           />
-          <q-btn icon="play_arrow" round color="primary" @click="startRollCall"></q-btn>
+          <q-btn
+            icon="play_arrow"
+            class="fixed-bottom-right q-mr-xs q-mb-xs"
+            round
+            color="primary"
+            @click="startRollCall"
+          ></q-btn>
         </q-card-actions>
       </q-card>
 
