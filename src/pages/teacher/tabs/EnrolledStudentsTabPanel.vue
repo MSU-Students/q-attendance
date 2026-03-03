@@ -41,9 +41,33 @@ function enrollStudent() {
   studentEmail.value = '';
 }
 
+async function mergeDuplicateRecords() {
+  const duplicates = enrolledStudents.value.reduce((duplicates, current, _index, all) => {
+    const exists = duplicates.find((a) => a[0]?.email == current.email);
+    const occurrences = all.filter((s) => current.email && s.email == current.email);
+    if (occurrences.length > 1 && !exists) {
+      duplicates.push(occurrences);
+    }
+    return duplicates;
+  }, [] as StudentEnrollment[][]);
+  if (duplicates.length == 0) {
+    $q.notify({
+      message: `No Duplicates found`,
+      position: 'center',
+    });
+  } else {
+    while (duplicates.length) {
+      const forMerging = duplicates.shift();
+      mergingSelection.value = forMerging || [];
+      await mergeStudentRecords();
+    }
+  }
+}
+
 async function mergeStudentRecords() {
+  if (mergingSelection.value.length == 0) return;
   const notify = $q.notify({
-    message: 'Merging',
+    message: `Merging ${mergingSelection.value[0]?.email}`,
     progress: true,
     timeout: 0,
     position: 'center',
@@ -220,6 +244,14 @@ async function studentsFromClipboard() {
             </q-item-section>
             <q-item-section>
               <q-item-label>Merge Records</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item clickable v-close-popup @click="mergeDuplicateRecords">
+            <q-item-section avatar>
+              <q-icon name="merge" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>Merge Duplicates</q-item-label>
             </q-item-section>
           </q-item>
           <q-item>
