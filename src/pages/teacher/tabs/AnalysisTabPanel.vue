@@ -21,7 +21,9 @@ if (props.cls.key) {
     loadAllCheckIns: true,
     onSnapshot(meetings: ClassMeetingModel[]) {
       const now = new Date();
-      attendanceHistory.value = meetings.filter((m) => date.getDateDiff(m.date, now, 'days') < 0);
+      attendanceHistory.value = meetings.filter(
+        (m) => date.getDateDiff(m.date, now, 'days') < 0 && m.status == 'concluded',
+      );
     },
   });
   onUnmounted(() => {
@@ -56,6 +58,7 @@ const attendanceStats = computed(() => {
     presentCount: number;
     absentCount: number;
     lateCount: number;
+    excuseCount: number;
     attendanceRate: number;
     maxConsecutiveAbsences: number;
   }> = [];
@@ -70,12 +73,14 @@ const attendanceStats = computed(() => {
       lateCount: stats.lateCount,
       attendanceRate: stats.attendanceRate,
       maxConsecutiveAbsences: stats.maxConsecutiveAbsences,
+      excuseCount: stats.excusedCount,
     });
   });
 
   const totalPresent = studentStats.reduce((sum, s) => sum + s.presentCount, 0);
   const totalAbsent = studentStats.reduce((sum, s) => sum + s.absentCount, 0);
   const totalLate = studentStats.reduce((sum, s) => sum + s.lateCount, 0);
+  const totalExcuse = studentStats.reduce((sum, s) => sum + s.excuseCount, 0);
 
   const averageAttendanceRate =
     studentStats.length > 0
@@ -89,6 +94,7 @@ const attendanceStats = computed(() => {
     totalAbsent,
     totalLate,
     studentStats,
+    totalExcuse,
   };
 });
 </script>
@@ -140,6 +146,7 @@ const attendanceStats = computed(() => {
       :total-present="attendanceStats.totalPresent"
       :total-absent="attendanceStats.totalAbsent"
       :total-late="attendanceStats.totalLate"
+      :total-excuse="attendanceStats.totalExcuse || 0"
       :average-attendance-rate="attendanceStats.averageAttendanceRate"
     />
 
@@ -167,6 +174,7 @@ const attendanceStats = computed(() => {
           ]"
           row-key="name"
           flat
+          :pagination="{ rowsNumber: 0 }"
           bordered
         >
           <template #body-cell-rate="props">

@@ -5,6 +5,7 @@ export interface StudentAttendanceStats {
   absentCount: number;
   lateCount: number;
   consecutiveAbsent: number;
+  excusedCount: number;
   maxConsecutiveAbsences: number;
   totalMeetings: number;
   attendanceRate: number;
@@ -17,6 +18,7 @@ export interface AttendanceStatus {
   conclusion: string;
   absentCount: number;
   lateCount: number;
+  excuseCount: number;
   consecutiveAbsent: number;
   maxConsecutiveAbsences: number;
 }
@@ -28,6 +30,7 @@ export function calculateStudentAttendance(
   let presentCount = 0;
   let absentCount = 0;
   let lateCount = 0;
+  let excusedCount = 0;
   let consecutiveAbsent = 0;
   let maxConsecutiveAbsences = 0;
 
@@ -53,6 +56,13 @@ export function calculateStudentAttendance(
             maxConsecutiveAbsences = Math.max(maxConsecutiveAbsences, consecutiveAbsent);
             consecutiveAbsent = 0;
           }
+        } else if (checkIn.status == 'excused') {
+          presentCount++;
+          excusedCount++;
+          if (consecutiveAbsent > 0) {
+            maxConsecutiveAbsences = Math.max(maxConsecutiveAbsences, consecutiveAbsent);
+            consecutiveAbsent = 0;
+          }
         }
       } else {
         absentCount++;
@@ -74,6 +84,7 @@ export function calculateStudentAttendance(
     absentCount,
     lateCount,
     consecutiveAbsent,
+    excusedCount,
     maxConsecutiveAbsences: maxConsecutiveAbsences > 1 ? maxConsecutiveAbsences : 0,
     totalMeetings,
     attendanceRate,
@@ -86,8 +97,14 @@ export function getAttendanceStatus(
   meetings: ClassMeetingModel[],
   studentKey: string,
 ): AttendanceStatus {
-  const { totalMeetings, absentCount, lateCount, consecutiveAbsent, maxConsecutiveAbsences } =
-    stats;
+  const {
+    totalMeetings,
+    absentCount,
+    lateCount,
+    consecutiveAbsent,
+    maxConsecutiveAbsences,
+    excusedCount
+  } = stats;
 
   // No data for first meeting
   if (totalMeetings <= 1) {
@@ -99,7 +116,8 @@ export function getAttendanceStatus(
       absentCount: 0,
       consecutiveAbsent: 0,
       lateCount: 0,
-      maxConsecutiveAbsences: 0
+      maxConsecutiveAbsences: 0,
+      excuseCount: 0
     };
   }
 
@@ -125,7 +143,8 @@ export function getAttendanceStatus(
       absentCount,
       lateCount,
       consecutiveAbsent,
-      maxConsecutiveAbsences
+      maxConsecutiveAbsences,
+      excuseCount: excusedCount
     };
   }
 
@@ -151,7 +170,8 @@ export function getAttendanceStatus(
       consecutiveAbsent,
       absentCount,
       lateCount,
-      maxConsecutiveAbsences
+      maxConsecutiveAbsences,
+      excuseCount: excusedCount
     };
   }
 
@@ -165,6 +185,7 @@ export function getAttendanceStatus(
       consecutiveAbsent,
       absentCount,
       lateCount,
+      excuseCount: excusedCount,
       maxConsecutiveAbsences
     };
   }
@@ -178,6 +199,7 @@ export function getAttendanceStatus(
     consecutiveAbsent,
     absentCount,
     lateCount,
+    excuseCount: excusedCount,
     maxConsecutiveAbsences
   };
 }

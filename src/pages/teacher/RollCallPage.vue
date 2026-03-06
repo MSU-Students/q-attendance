@@ -80,7 +80,7 @@ function randomizeStudents() {
 const initializeSelectedStatuses = () => {
   if (!currentMeeting.value) return;
 
-  const statusMap: Record<StudentKey, MeetingCheckInModel['status']> = {};
+  const statusMap: Record<StudentKey, MeetingCheckInModel['status']> = selectedStatuses.value || {};
   //assume everyone is absent first
   enrolledStudents.value.forEach((student) => {
     if (student.key) {
@@ -139,6 +139,7 @@ async function updateStudentStatus(studentKey: string, status: MeetingCheckInMod
       maxConsecutiveAbsences: currentStudent.value.consecutiveAbsences || 0,
       presentCount: 0,
       totalMeetings: 0,
+      excusedCount: 0,
     },
     currentStudent.value.fullName || '',
     meetings,
@@ -333,7 +334,10 @@ function selectNextStudent(reverse?: boolean) {
     showDialog.value = false;
   }
 }
-async function onCallStatus(status: MeetingCheckInModel['status'] | 'later' | 'back') {
+async function onCallStatus(
+  student: string,
+  status: MeetingCheckInModel['status'] | 'later' | 'back',
+) {
   if (!currentStudent.value) return;
   switch (status) {
     case 'absent':
@@ -341,7 +345,7 @@ async function onCallStatus(status: MeetingCheckInModel['status'] | 'later' | 'b
     case 'late':
     case 'present':
       selectNextStudent();
-      await updateStudentStatus(currentStudent.value.key, status);
+      await updateStudentStatus(student, status);
       break;
     case 'back':
       selectNextStudent(true);
@@ -514,6 +518,7 @@ function cancelMeeting(meeting: ClassMeetingModel) {
                       </span>
                     </q-avatar>
                     {{ props.row.name }}
+                    {{ props.row.reportStatus ? `(${props.row.reportStatus})` : '' }}
                   </q-card-section>
                   <q-separator />
                   <q-list dense>

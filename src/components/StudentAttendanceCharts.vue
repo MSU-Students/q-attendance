@@ -12,6 +12,7 @@ const props = defineProps<{
   totalPresent: number;
   totalAbsent: number;
   totalLate: number;
+  totalExcuse: number;
   averageAttendanceRate: number;
 }>();
 
@@ -57,8 +58,8 @@ function renderDonut() {
   const options: ApexCharts.ApexOptions = {
     chart: { type: 'donut', height: 260 },
     series: [props.totalPresent, props.totalAbsent, props.totalLate],
-    labels: ['Present', 'Absent', 'Late'],
-    colors: ['#388e3c', '#d32f2f', '#f57c00'],
+    labels: ['Present', 'Absent', 'Late', 'Excuse'],
+    colors: ['#388e3c', '#d32f2f', '#f57c00', 'green'],
     legend: { position: 'bottom' },
     responsive: [
       {
@@ -70,7 +71,12 @@ function renderDonut() {
 
   if (donutChart) {
     donutChart.updateOptions(options);
-    donutChart.updateSeries([props.totalPresent, props.totalAbsent, props.totalLate]);
+    donutChart.updateSeries([
+      props.totalPresent,
+      props.totalAbsent,
+      props.totalLate,
+      props.totalExcuse,
+    ]);
     return;
   }
 
@@ -96,7 +102,7 @@ watch(
     renderBar();
     renderDonut();
   },
-  { deep: true }
+  { deep: true },
 );
 </script>
 

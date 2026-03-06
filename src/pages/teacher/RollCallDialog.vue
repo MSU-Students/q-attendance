@@ -54,6 +54,7 @@ const attendanceStatus = computed<AttendanceStatus>(() => {
       maxConsecutiveAbsences: 0,
       presentCount: 0,
       totalMeetings: 0,
+      excuseCount: 0,
     };
   }
   return getAttendanceStatus(
@@ -65,7 +66,11 @@ const attendanceStatus = computed<AttendanceStatus>(() => {
 });
 
 const emits = defineEmits<{
-  (event: 'callStatus', status: MeetingCheckInModel['status'] | 'later' | 'back'): void;
+  (
+    event: 'callStatus',
+    student: string,
+    status: MeetingCheckInModel['status'] | 'later' | 'back',
+  ): void;
 }>();
 
 function callStatus(status: MeetingCheckInModel['status'] | 'later' | 'back') {
@@ -83,7 +88,7 @@ function callStatus(status: MeetingCheckInModel['status'] | 'later' | 'back') {
     //   },
     // });
   }
-  emits('callStatus', status);
+  emits('callStatus', props.currentStudent.key, status);
 }
 </script>
 <template>
