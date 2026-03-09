@@ -344,6 +344,7 @@ async function onCallStatus(
     case 'check-in':
     case 'late':
     case 'present':
+    case 'excused':
       await updateStudentStatus(student, status);
       selectNextStudent();
       break;

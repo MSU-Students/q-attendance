@@ -161,6 +161,12 @@ function callStatus(status: MeetingCheckInModel['status'] | 'later' | 'back') {
           @click="callStatus('late')"
           >Late</q-btn
         >
+        <q-btn
+          color="positive"
+          :outline="currentCheckIn?.status == 'excused'"
+          @click="callStatus('excused')"
+          >Excused</q-btn
+        >
       </q-card-actions>
       <q-card-section>
         <q-btn
