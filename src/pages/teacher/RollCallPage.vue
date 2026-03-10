@@ -7,7 +7,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { ClassModel, StudentEnrollment } from 'src/models/class.models';
 import RollCallDialog from './RollCallDialog.vue';
 import { useClassStore } from 'src/stores/class-store';
-import { getAttendanceStatus } from 'src/utils/attendance-utils';
+import { calculateStudentAttendance, getAttendanceStatus } from 'src/utils/attendance-utils';
 
 type StudentKey = string;
 
@@ -22,6 +22,7 @@ const currentMeeting = ref<ClassMeetingModel>();
 const studentCheckIns = ref<MeetingCheckInModel[]>([]);
 const enrolledStudents = computed(() => currentClass.value?.enrolled || []);
 const studentsCallStack = ref<StudentEnrollment[]>([]);
+const studentsUpdateStack = ref<StudentEnrollment[]>([]);
 const isSubmitting = ref(false);
 const selectedStatuses = ref<Record<StudentKey, MeetingCheckInModel['status']>>({});
 const activeClass = computed(() => {
@@ -126,33 +127,47 @@ async function updateStudentStatus(studentKey: string, status: MeetingCheckInMod
   if (currentCheckIn.value) {
     currentCheckIn.value.status = status;
   }
-  if (!currentClass.value || !currentStudent.value) return;
+  if (!currentClass.value) return;
+  const student = await classStore.getClassStudent(currentClass.value.key, studentKey);
+  if (!student) {
+    console.error(`Student ${studentKey} not found`);
+    return;
+  }
+  studentsUpdateStack.value.push(student);
+  const meetings = (
+    await attendanceStore.loadClassMeetings(currentClass.value?.key || '', {
+      student: studentKey,
+    })
+  ).filter((m) => m.status == 'concluded');
 
-  const meetings = await attendanceStore.loadClassMeetings(currentClass.value?.key || '', {
-    student: studentKey,
-  });
+  const studentStat = calculateStudentAttendance(meetings, studentKey);
   const stats = getAttendanceStatus(
     {
-      absentCount: currentStudent.value.totalAbsences || 0,
-      consecutiveAbsent: currentStudent.value.consecutiveAbsences || 0,
-      attendanceRate: 0,
-      lateCount: currentStudent.value.totalTardiness || 0,
-      maxConsecutiveAbsences: currentStudent.value.consecutiveAbsences || 0,
-      presentCount: 0,
-      totalMeetings: 0,
-      excusedCount: 0,
+      absentCount: studentStat.absentCount || 0,
+      consecutiveAbsent: studentStat.consecutiveAbsent || 0,
+      attendanceRate: studentStat.attendanceRate,
+      lateCount: studentStat.lateCount || 0,
+      maxConsecutiveAbsences: studentStat.maxConsecutiveAbsences || 0,
+      presentCount: studentStat.presentCount,
+      totalMeetings: studentStat.totalMeetings,
+      excusedCount: studentStat.excusedCount,
     },
-    currentStudent.value.fullName || '',
+    student.fullName || '',
     meetings,
     studentKey,
   );
+
   await classStore.updateStudentStatus({
     class: currentClass.value,
     student: {
-      ...currentStudent.value,
+      ...student,
       totalAbsences: stats.absentCount,
+      consecutiveAbsences: stats.consecutiveAbsent,
+      totalTardiness: stats.lateCount,
+      reportStatus: stats.status as StudentEnrollment['reportStatus'],
     },
   });
+  studentsUpdateStack.value = studentsUpdateStack.value.filter((s) => s.key != student.key);
 }
 async function saveRollCall(isSubmit: boolean = false) {
   if (isSubmit) {
@@ -335,10 +350,7 @@ function selectNextStudent(reverse?: boolean) {
     showDialog.value = false;
   }
 }
-async function onCallStatus(
-  student: string,
-  status: MeetingCheckInModel['status'] | 'later' | 'back',
-) {
+function onCallStatus(student: string, status: MeetingCheckInModel['status'] | 'later' | 'back') {
   if (!currentStudent.value) return;
   switch (status) {
     case 'absent':
@@ -347,7 +359,7 @@ async function onCallStatus(
     case 'present':
     case 'excused':
       selectNextStudent();
-      await updateStudentStatus(student, status);
+      updateStudentStatus(student, status);
       break;
     case 'back':
       selectNextStudent(true);
@@ -609,5 +621,8 @@ function cancelMeeting(meeting: ClassMeetingModel) {
       :current-check-in="currentCheckIn"
       @call-status="onCallStatus"
     />
+    <q-page-sticky position="bottom-left" v-if="studentsUpdateStack.length > 0" :offset="[18, 18]">
+      <q-badge>Updating {{ studentsUpdateStack.length }} Students</q-badge>
+    </q-page-sticky>
   </q-page>
 </template>

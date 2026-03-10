@@ -29,6 +29,10 @@ export const useClassStore = defineStore('class', {
         return record;
       }
     },
+    async getClassStudent(classKey: string, studentKey: string) {
+      const persistentStore = usePersistentStore();
+      return persistentStore.getRecord('enrolled', studentKey, `/classes/${classKey}`);
+    },
     async deleteClass(key: string) {
       const persistentStore = usePersistentStore();
       const keepingStore = useKeepingStore();
