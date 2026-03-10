@@ -107,6 +107,7 @@ const studentsWithStatus = computed(() => {
       name: student.fullName || 'Unknown Student',
       email: student.email || '',
       avatar: student.avatar,
+      reportStatus: student.reportStatus,
       status: selectedStatuses.value[studentKey] || 'check-in',
       checkInTime: checkIn?.checkInTime || '[NO CHECKED-IN]',
       checkInKey: checkIn?.key || student.key || '',
@@ -345,8 +346,8 @@ async function onCallStatus(
     case 'late':
     case 'present':
     case 'excused':
-      await updateStudentStatus(student, status);
       selectNextStudent();
+      await updateStudentStatus(student, status);
       break;
     case 'back':
       selectNextStudent(true);
@@ -512,14 +513,16 @@ function cancelMeeting(meeting: ClassMeetingModel) {
                       <img
                         v-if="props.row.avatar"
                         :src="props.row.avatar"
-                        :alt="props.row.fullName ? props.row.fullName[0] : 'S'"
+                        :alt="props.row.name ? props.row.name[0] : 'S'"
                       />
                       <span v-else>
-                        {{ props.row.fullName ? props.row.fullName[0] : 'S' }}
+                        {{ props.row.name ? props.row.name[0] : 'S' }}
                       </span>
                     </q-avatar>
                     {{ props.row.name }}
-                    {{ props.row.reportStatus ? `(${props.row.reportStatus})` : '' }}
+                    <q-badge v-if="props.row.reportStatus">
+                      {{ props.row.reportStatus }}
+                    </q-badge>
                   </q-card-section>
                   <q-separator />
                   <q-list dense>
