@@ -621,7 +621,12 @@ function cancelMeeting(meeting: ClassMeetingModel) {
       :current-check-in="currentCheckIn"
       @call-status="onCallStatus"
     />
-    <q-page-sticky position="bottom-left" v-if="studentsUpdateStack.length > 0" :offset="[18, 18]">
+    <q-page-sticky
+      class="z-max"
+      position="bottom-left"
+      v-if="studentsUpdateStack.length > 0"
+      :offset="[18, 18]"
+    >
       <q-badge>Updating {{ studentsUpdateStack.length }} Students</q-badge>
     </q-page-sticky>
   </q-page>
