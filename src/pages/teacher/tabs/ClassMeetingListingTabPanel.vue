@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { date, Notify, QTableColumn, useQuasar } from 'quasar';
+import { date, QTableColumn, useQuasar } from 'quasar';
 import { ClassMeetingModel } from 'src/models/attendance.models';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
