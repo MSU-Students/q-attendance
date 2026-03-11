@@ -7,6 +7,7 @@ import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import AttendanceReportDialog from '../AttendanceReportDialog.vue';
 import { useAttendanceStore } from 'src/stores/attendance-store';
+import { ClassMeetingModel } from 'src/models';
 
 const props = defineProps<{
   name: string;
@@ -32,6 +33,7 @@ const showNewStudentDialog = ref(false);
 const studentName = ref('');
 const studentEmail = ref('');
 const showAttendanceReport = ref(false);
+const concludedMeetings = ref<ClassMeetingModel[]>([]);
 const enableMerging = ref(false);
 const mergingSelection = ref<StudentEnrollment[]>([]);
 const currentStudent = ref<StudentEnrollment>();
@@ -90,9 +92,11 @@ async function analyzeStudent(student: StudentEnrollment) {
   showAttendanceReport.value = false;
   if (!activeClass.value) return;
   currentStudent.value = student;
-  await attendanceStore.loadClassMeetings(activeClass.value.key, {
-    student: student.key,
-  });
+  concludedMeetings.value = (
+    await attendanceStore.loadClassMeetings(activeClass.value.key, {
+      student: student.key,
+    })
+  ).filter((m) => m.status == 'concluded');
   showAttendanceReport.value = true;
 }
 
@@ -348,7 +352,7 @@ async function studentsFromClipboard() {
         v-model="showAttendanceReport"
         :target-class="activeClass"
         :current-student="currentStudent"
-        :all-meetings="attendanceStore.meetings"
+        :all-meetings="concludedMeetings"
       />
     </template>
   </q-tab-panel>

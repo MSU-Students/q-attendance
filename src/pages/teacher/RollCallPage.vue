@@ -8,6 +8,7 @@ import { ClassModel, StudentEnrollment } from 'src/models/class.models';
 import RollCallDialog from './RollCallDialog.vue';
 import { useClassStore } from 'src/stores/class-store';
 import { calculateStudentAttendance, getAttendanceStatus } from 'src/utils/attendance-utils';
+import AttendanceReportDialog from './AttendanceReportDialog.vue';
 
 type StudentKey = string;
 
@@ -410,6 +411,21 @@ function cancelMeeting(meeting: ClassMeetingModel) {
     ],
   });
 }
+const showAttendanceReport = ref(false);
+const concludedMeetings = ref<ClassMeetingModel[]>([]);
+async function analyzeStudent(studentKey: string) {
+  showAttendanceReport.value = false;
+  if (!activeClass.value) return;
+  const student = await classStore.getClassStudent(activeClass.value.key, studentKey);
+  if (!student) return;
+  currentStudent.value = student;
+  concludedMeetings.value = (
+    await attendanceStore.loadClassMeetings(activeClass.value.key, {
+      student: student.key,
+    })
+  ).filter((m) => m.status == 'concluded');
+  showAttendanceReport.value = true;
+}
 </script>
 
 <template>
@@ -520,7 +536,7 @@ function cancelMeeting(meeting: ClassMeetingModel) {
                   flat
                   :class="props.selected ? ($q.dark.isActive ? 'bg-grey-9' : 'bg-grey-2') : ''"
                 >
-                  <q-card-section>
+                  <q-card-section @click="analyzeStudent(props.row)">
                     <q-avatar size="md" color="primary" text-color="white">
                       <img
                         v-if="props.row.avatar"
@@ -629,5 +645,13 @@ function cancelMeeting(meeting: ClassMeetingModel) {
     >
       <q-badge>Updating {{ studentsUpdateStack.length }} Students</q-badge>
     </q-page-sticky>
+    <template v-if="activeClass && currentStudent">
+      <AttendanceReportDialog
+        v-model="showAttendanceReport"
+        :target-class="activeClass"
+        :current-student="currentStudent"
+        :all-meetings="concludedMeetings"
+      />
+    </template>
   </q-page>
 </template>

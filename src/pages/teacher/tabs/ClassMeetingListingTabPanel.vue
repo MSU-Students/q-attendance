@@ -94,17 +94,6 @@ function viewAttendanceDetails(meeting: ClassMeetingModel) {
 }
 
 function startRollCall(meeting: ClassMeetingModel) {
-  if (meeting.status !== 'open') {
-    Notify.create({
-      message: 'Roll call can only be performed for open attendance sessions',
-      color: 'negative',
-      icon: 'error',
-      position: 'top',
-      timeout: 3000,
-    });
-    return;
-  }
-
   void $router.push({
     name: 'rollCall',
     params: {
