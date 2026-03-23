@@ -171,17 +171,17 @@ async function updateStudentStatus(studentKey: string, status: MeetingCheckInMod
   studentsUpdateStack.value = studentsUpdateStack.value.filter((s) => s.key != student.key);
 }
 async function saveRollCall(isSubmit: boolean = false) {
+  if (studentsUpdateStack.value.length > 0) {
+    Notify.create({
+      message: 'Failed to save roll call since students updates is in progress',
+      color: 'negative',
+      icon: 'error',
+      position: 'top',
+      timeout: 3000,
+    });
+    return;
+  }
   if (isSubmit) {
-    if (studentsUpdateStack.value.length > 0) {
-      Notify.create({
-        message: 'Failed to submit roll call since students updates is in progress',
-        color: 'negative',
-        icon: 'error',
-        position: 'top',
-        timeout: 3000,
-      });
-      return;
-    }
     Dialog.create({
       title: 'Submit Roll Call',
       message: 'Are you sure you want to submit this roll call?',
