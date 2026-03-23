@@ -172,6 +172,16 @@ async function updateStudentStatus(studentKey: string, status: MeetingCheckInMod
 }
 async function saveRollCall(isSubmit: boolean = false) {
   if (isSubmit) {
+    if (studentsUpdateStack.value.length > 0) {
+      Notify.create({
+        message: 'Failed to submit roll call since students updates is in progress',
+        color: 'negative',
+        icon: 'error',
+        position: 'top',
+        timeout: 3000,
+      });
+      return;
+    }
     Dialog.create({
       title: 'Submit Roll Call',
       message: 'Are you sure you want to submit this roll call?',
@@ -184,83 +194,37 @@ async function saveRollCall(isSubmit: boolean = false) {
         label: 'Cancel',
         flat: true,
       },
-    }).onOk(() => {
+    }).onOk(async () => {
       isSubmitting.value = true;
-
-      const updatePromises = studentsWithStatus.value.map((student) => {
-        const status = selectedStatuses.value[student.key];
-        if (!status) return Promise.resolve();
-
-        return attendanceStore.updateCheckInStatus({
-          meetingKey: currentMeeting.value?.key || '',
-          checkInKey: student.checkInKey,
-          student: student.key,
-          status: status,
-        });
-      });
-
-      Promise.all(updatePromises)
-        .then(async () => {
-          Notify.create({
-            message: 'Roll call submitted successfully',
-            color: 'green',
-            icon: 'check_circle',
-            position: 'top',
-            timeout: 3000,
-          });
-
-          await attendanceStore.concludeMeeting(currentMeeting.value?.key || '');
-
-          void router.push({
-            name: 'teacherClass',
-            params: {
-              classKey: route.params.classKey as string,
-            },
-          });
-        })
-        .catch((error) => {
-          console.error('Error submitting roll call:', error);
-          Notify.create({
-            message: 'Failed to submit roll call',
-            color: 'negative',
-            icon: 'error',
-            position: 'top',
-            timeout: 3000,
-          });
-        });
-    });
-  } else {
-    try {
-      isSubmitting.value = true;
-
-      const updatePromises = studentsWithStatus.value.map((student) => {
-        const status = selectedStatuses.value[student.key];
-        if (!status) return Promise.resolve();
-
-        return attendanceStore.updateCheckInStatus({
-          meetingKey: currentMeeting.value?.key || '',
-          checkInKey: student.checkInKey,
-          student: student.key,
-          status: status,
-        });
-      });
-
-      await Promise.all(updatePromises).then(async () => {
-        Notify.create({
-          message: 'Roll call saved',
-          color: 'green',
-          icon: 'check_circle',
-          position: 'top',
-          timeout: 3000,
-        });
-        await attendanceStore.latestCallMeeting(currentMeeting.value?.key || '');
-
-        await router.push({
+      try {
+        await attendanceStore.concludeMeeting(currentMeeting.value?.key || '');
+        void router.push({
           name: 'teacherClass',
           params: {
             classKey: route.params.classKey as string,
           },
         });
+      } finally {
+        isSubmitting.value = false;
+      }
+    });
+  } else {
+    try {
+      isSubmitting.value = true;
+      await attendanceStore.latestCallMeeting(currentMeeting.value?.key || '');
+      Notify.create({
+        message: 'Roll call saved',
+        color: 'green',
+        icon: 'check_circle',
+        position: 'top',
+        timeout: 3000,
+      });
+
+      await router.push({
+        name: 'teacherClass',
+        params: {
+          classKey: route.params.classKey as string,
+        },
       });
     } catch (error) {
       console.error('Error submitting roll call:', error);
@@ -271,9 +235,10 @@ async function saveRollCall(isSubmit: boolean = false) {
         position: 'top',
         timeout: 3000,
       });
+    } finally {
+      isSubmitting.value = false;
     }
   }
-  isSubmitting.value = false;
 }
 async function overrideValidationForRow(row: ClassMeetingModel) {
   try {
