@@ -135,6 +135,15 @@ async function updateStudentStatus(studentKey: string, status: MeetingCheckInMod
     return;
   }
   studentsUpdateStack.value.push(student);
+  const checkIn = studentsWithStatus.value.find((s) => s.key == studentKey);
+  if (checkIn) {
+    await attendanceStore.updateCheckInStatus({
+      meetingKey: currentMeeting.value?.key || '',
+      checkInKey: checkIn.checkInKey,
+      student: student.key,
+      status: status,
+    });
+  }
   const meetings = (
     await attendanceStore.loadClassMeetings(currentClass.value?.key || '', {
       student: studentKey,
