@@ -1,7 +1,7 @@
 <template>
   <!-- Attendance Report Dialog -->
   <q-dialog v-model="showAttendanceReport" @before-hide="onClose">
-    <q-card style="min-width: 500px; max-width: 700px">
+    <q-card style="min-width: 500px" :style="'max-width:' + $q.screen.width + 'px'">
       <q-card-section class="bg-primary text-white q-pa-md">
         <div class="text-h6 text-center">
           <q-icon name="analytics" class="q-mr-sm" />
@@ -507,7 +507,7 @@ function formatConclusionWithColors(text: string): string {
 // Format date for display
 function formatDisplayDate(dateStr: string): string {
   try {
-    return date.formatDate(dateStr, 'MMM DD, YYYY');
+    return date.formatDate(dateStr, 'MMM DD');
   } catch {
     return dateStr;
   }
@@ -524,7 +524,7 @@ const studentAttendanceRecords = computed(() => {
       meetingTime: extractTimeFromDate(meeting.date),
       checkInTime: checkIn?.checkInTime
         ? extractTimeFromDate(checkIn.checkInTime)
-        : 'Not checked in',
+        : 'Not checked-in',
       status: checkIn?.status || 'absent',
       meeting,
       fullCheckInTime: checkIn?.checkInTime || 'Not checked in',
