@@ -510,7 +510,7 @@ async function analyzeStudent(studentKey: string) {
                   flat
                   :class="props.selected ? ($q.dark.isActive ? 'bg-grey-9' : 'bg-grey-2') : ''"
                 >
-                  <q-card-section @click="analyzeStudent(props.row)">
+                  <q-card-section @click="analyzeStudent(props.row.key)">
                     <q-avatar size="md" color="primary" text-color="white">
                       <img
                         v-if="props.row.avatar"
@@ -625,6 +625,7 @@ async function analyzeStudent(studentKey: string) {
         :target-class="activeClass"
         :current-student="currentStudent"
         :all-meetings="concludedMeetings"
+        @refresh="analyzeStudent(currentStudent.key)"
       />
     </template>
   </q-page>

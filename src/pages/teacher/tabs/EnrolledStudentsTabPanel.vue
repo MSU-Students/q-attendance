@@ -353,6 +353,7 @@ async function studentsFromClipboard() {
         :target-class="activeClass"
         :current-student="currentStudent"
         :all-meetings="concludedMeetings"
+        @refresh="analyzeStudent(currentStudent)"
       />
     </template>
   </q-tab-panel>

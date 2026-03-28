@@ -157,7 +157,13 @@
               >
                 <template v-slot:body-cell-status="props">
                   <q-td :props="props">
-                    <q-chip :color="getStatusColor(props.row.status)" text-color="white" size="xs">
+                    <q-chip
+                      clickable
+                      @click="changeStatus(props.row)"
+                      :color="getStatusColor(props.row.status)"
+                      text-color="white"
+                      size="xs"
+                    >
                       {{ props.row.status.toUpperCase() }}
                     </q-chip>
                   </q-td>
@@ -329,8 +335,9 @@
   </q-dialog>
 </template>
 <script setup lang="ts">
-import { date } from 'quasar';
-import { ClassMeetingModel, ClassModel, StudentEnrollment } from 'src/models';
+import { date, useQuasar } from 'quasar';
+import { ClassMeetingModel, ClassModel, MeetingCheckInModel, StudentEnrollment } from 'src/models';
+import { useAttendanceStore } from 'src/stores/attendance-store';
 import { useClassStore } from 'src/stores/class-store';
 import {
   AttendanceStatus,
@@ -340,6 +347,15 @@ import {
 import { computed } from 'vue';
 import { ref } from 'vue';
 
+type StudentCheckIn = {
+  checkInKey: string;
+  date: string;
+  meetingTime: string;
+  checkInTime: string;
+  status: MeetingCheckInModel['status'];
+  meeting: ClassMeetingModel;
+  fullCheckInTime: string;
+};
 const showAttendanceReport = defineModel<boolean>({ default: false });
 const props = defineProps<{
   targetClass: ClassModel;
@@ -347,6 +363,7 @@ const props = defineProps<{
   allMeetings: ClassMeetingModel[];
   skipSaving?: boolean;
 }>();
+const $emits = defineEmits(['refresh']);
 const activeTab = ref('calendar');
 const currentMonth = ref(new Date());
 
@@ -489,6 +506,38 @@ function getCellBgColor(status: string | null): string {
   }
 }
 
+const $q = useQuasar();
+function changeStatus(info: StudentCheckIn) {
+  const dialog = $q
+    .dialog({
+      title: 'Change Status from ' + info.status,
+      message: `Select new Status for ${props.currentStudent.fullName} ${info.date}`,
+      options: {
+        type: 'radio',
+        model: info.status,
+        // inline: true
+        items: [
+          { label: 'Check-In', value: 'check-in' },
+          { label: 'Absent', value: 'absent' },
+          { label: 'Excused', value: 'excused' },
+          { label: 'Late', value: 'late' },
+          { label: 'Present', value: 'present' },
+        ] as { label: string; value: MeetingCheckInModel['status'] }[],
+      },
+      cancel: true,
+    })
+    .onOk(async (data) => {
+      await useAttendanceStore().updateCheckInStatus({
+        checkInKey: info.checkInKey,
+        meetingKey: info.meeting.key,
+        status: data,
+        student: props.currentStudent.key,
+      });
+      dialog.hide();
+      $emits('refresh');
+    });
+}
+
 // Calculate student attendance stats
 const attendanceStats = computed(() => {
   if (!props.currentStudent.key || concludedMeetings.value.length === 0) {
@@ -520,6 +569,7 @@ const studentAttendanceRecords = computed(() => {
   return concludedMeetings.value.map((meeting) => {
     const checkIn = meeting.checkIns?.find((ci) => ci.key === props.currentStudent.key);
     return {
+      checkInKey: checkIn?.key,
       date: meeting.date,
       meetingTime: extractTimeFromDate(meeting.date),
       checkInTime: checkIn?.checkInTime
@@ -528,7 +578,7 @@ const studentAttendanceRecords = computed(() => {
       status: checkIn?.status || 'absent',
       meeting,
       fullCheckInTime: checkIn?.checkInTime || 'Not checked in',
-    };
+    } as StudentCheckIn;
   });
 });
 
