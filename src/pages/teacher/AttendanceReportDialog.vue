@@ -1,7 +1,7 @@
 <template>
   <!-- Attendance Report Dialog -->
   <q-dialog v-model="showAttendanceReport" @before-hide="onClose">
-    <q-card style="min-width: 500px" :style="'max-width:' + $q.screen.width + 'px'">
+    <q-card style="min-width: 300px" :style="'max-width:' + $q.screen.width + 'px'">
       <q-card-section class="bg-primary text-white q-pa-md">
         <div class="text-h6 text-center">
           <q-icon name="analytics" class="q-mr-sm" />
@@ -136,13 +136,13 @@
                   },
                   {
                     name: 'meetingTime',
-                    label: 'Meeting Time',
+                    label: 'Time',
                     field: 'meetingTime',
                     align: 'center',
                   },
                   {
                     name: 'checkInTime',
-                    label: 'Check-in Time',
+                    label: 'Check-in',
                     field: 'checkInTime',
                     align: 'center',
                   },
