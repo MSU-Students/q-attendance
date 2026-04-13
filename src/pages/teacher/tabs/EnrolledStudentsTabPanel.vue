@@ -26,7 +26,7 @@ const activeClass = computed(() => {
 });
 const enrolledStudents = computed(() => {
   return (activeClass.value?.enrolled || [])
-    .filter((e) => e.status == 'active')
+    //.filter((e) => e.status == 'active')
     .sort((a, b) => a.email.localeCompare(b.email));
 });
 const showNewStudentDialog = ref(false);
