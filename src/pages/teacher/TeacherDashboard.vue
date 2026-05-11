@@ -39,7 +39,9 @@ const teacherClasses = computed<ClassToday[]>(() => {
       } else if (a.meetings.length == 0 && b.meetings.length) {
         return 1;
       } else if (a.meetings.length && b.meetings.length) {
-        return a.meetings[0]!.date.localeCompare(b.meetings[0]!.date);
+        const dateA = date.extractDate(a.meetings[0]!.date, 'YYYY/MM/DD HH:mm');
+        const dateB = date.extractDate(b.meetings[0]!.date, 'YYYY/MM/DD HH:mm');
+        return date.getDateDiff(dateA, dateB, 'minutes');
       } else {
         return 0;
       }
