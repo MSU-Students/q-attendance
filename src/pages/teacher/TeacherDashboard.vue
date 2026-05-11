@@ -500,7 +500,6 @@ function parseMsuClassList(file: File) {
 .code {
   padding-left: 5%;
   padding-right: 10%;
-  padding-bottom: 15%;
   padding-top: 3%;
 }
 
