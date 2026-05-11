@@ -98,6 +98,43 @@ export const useKeepingStore = defineStore('Keeping', {
     joinOrg(org: OrgModel) {
       this.memberships.push(org);
     },
+    async searchStudentFromKeepings(keyword: string) {
+      type Match = {
+        studentKey: string;
+        studentName: string;
+        avatar: string | undefined;
+        classKey: string;
+        classCode: string;
+        className: string;
+        classSection: string;
+      }
+      const results: Match[] = [];
+      const persistentStore = usePersistentStore();
+      await Promise.all(this.teaching.map(async cls => {
+        const students = await persistentStore.findRecords('enrolled', `/classes/${cls.key}`);
+        if (students.length) {
+          students.forEach(stud => {
+            const containsExp = new RegExp(keyword, 'i');
+            const found = keyword && containsExp.test(stud.fullName)
+              || containsExp.test(stud.email)
+              || containsExp.test(stud.studentId || '')
+              || containsExp.test(stud.course || '');
+            if (found) {
+              results.push({
+                avatar: stud.avatar,
+                classKey: cls.key,
+                classCode: cls.classCode,
+                studentKey: stud.key,
+                studentName: stud.fullName,
+                className: cls.name,
+                classSection: cls.section,
+              })
+            }
+          })
+        }
+      }));
+      return results;
+    }
   },
 });
 

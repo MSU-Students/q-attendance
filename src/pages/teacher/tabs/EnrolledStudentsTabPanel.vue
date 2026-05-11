@@ -25,9 +25,11 @@ const activeClass = computed(() => {
   return undefined;
 });
 const enrolledStudents = computed(() => {
-  return (activeClass.value?.enrolled || [])
-    //.filter((e) => e.status == 'active')
-    .sort((a, b) => a.email.localeCompare(b.email));
+  return (
+    (activeClass.value?.enrolled || [])
+      //.filter((e) => e.status == 'active')
+      .sort((a, b) => a.email.localeCompare(b.email))
+  );
 });
 const showNewStudentDialog = ref(false);
 const studentName = ref('');

@@ -96,7 +96,6 @@ export const useClassStore = defineStore('class', {
         await persistentStore.deleteRecord('enrolled', c, `/classes/${payload.class.key}`)
       }))
     },
-
     async enroll(payload: { class: ClassModel; student: StudentUserModel }) {
       const persistentStore = usePersistentStore();
       const cls = await persistentStore.getRecord('classes', payload.class.key);

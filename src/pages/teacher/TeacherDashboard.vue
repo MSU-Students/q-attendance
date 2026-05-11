@@ -8,6 +8,7 @@ import { useRouter } from 'vue-router';
 import { useClassStore } from 'src/stores/class-store';
 import { ClassMeetingModel, StudentUserModel } from 'src/models';
 import { useAttendanceStore } from 'src/stores/attendance-store';
+import TeacherSearchBox from 'src/components/TeacherSearchBox.vue';
 
 type ClassToday = ClassModel & {
   meetings: ClassMeetingModel[];
@@ -290,7 +291,7 @@ function parseMsuClassList(file: File) {
 <template>
   <q-page class="q-pa-md allCards">
     <div class="row items-center justify-between q-mb-lg">
-      <div class="text-h5 text-weight-bold">My Classes</div>
+      <teacher-search-box class="col" />
     </div>
 
     <div class="row q-col-gutter-md">
