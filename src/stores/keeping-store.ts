@@ -1,5 +1,5 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
-import type { ClassModel } from 'src/models/class.models';
+import type { ClassModel, StudentEnrollment } from 'src/models/class.models';
 import { usePersistentStore } from './persistent-store';
 import { OrgModel } from 'src/models';
 
@@ -103,6 +103,7 @@ export const useKeepingStore = defineStore('Keeping', {
         studentKey: string;
         studentName: string;
         avatar: string | undefined;
+        studentStatus: StudentEnrollment['reportStatus'];
         classKey: string;
         classCode: string;
         className: string;
@@ -128,6 +129,7 @@ export const useKeepingStore = defineStore('Keeping', {
                 studentName: stud.fullName,
                 className: cls.name,
                 classSection: cls.section,
+                studentStatus: stud.reportStatus
               })
             }
           })

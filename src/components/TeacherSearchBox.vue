@@ -23,8 +23,11 @@
                       :alt="((item.row as Match)?.studentName || '0')?.charAt(0).toUpperCase()"
                     />
                   </q-avatar>
-                  {{ (item.row as Match).studentName }}</q-card-section
-                >
+                  {{ (item.row as Match).studentName }}
+                  <div>
+                    <q-chip>{{ (item.row as Match).studentStatus }}</q-chip>
+                  </div>
+                </q-card-section>
                 <q-card-actions>
                   <q-btn
                     :to="{
@@ -37,7 +40,7 @@
                     {{ (item.row as Match).classSection }}</q-btn
                   >
                   <q-btn :loading="item.row.loading" @click="analyzeStudent(item.row as Match)"
-                    >Analyze</q-btn
+                    >Report</q-btn
                   >
                 </q-card-actions>
               </q-card>
