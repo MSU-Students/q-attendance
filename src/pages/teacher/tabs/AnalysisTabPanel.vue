@@ -64,7 +64,7 @@ const attendanceStats = computed(() => {
   }> = [];
 
   students.forEach((student) => {
-    const stats = calculateStudentAttendance(meetings, student.ownerKey || '');
+    const stats = calculateStudentAttendance(meetings, student.ownerKey || student.key || '');
 
     studentStats.push({
       name: student.fullName || 'Unknown',

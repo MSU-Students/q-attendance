@@ -77,7 +77,7 @@ export function calculateStudentAttendance(
 
   const totalMeetings = meetings.length;
   const attendanceRate =
-    totalMeetings > 0 ? Math.round(((presentCount + lateCount) / totalMeetings) * 100) : 0;
+    totalMeetings > 0 ? Math.round(((presentCount) / totalMeetings) * 100) : 0;
 
   return {
     presentCount,
