@@ -113,7 +113,7 @@ function openCreateClassDialog() {
           <EssentialLink
             v-for="theClass in classStore.teaching"
             :key="theClass.key"
-            :title="theClass.name"
+            :title="`${theClass.name} (${theClass.section})`"
             :icon="'class'"
             :link="`/teacher/class/${theClass.key}`"
           />

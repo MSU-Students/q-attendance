@@ -308,6 +308,7 @@
                 class="text-body2 text-weight-medium text-grey-8"
                 v-html="formatConclusionWithColors(attendanceStatus.conclusion)"
               ></div>
+              <q-chip>{{ attendanceStats.attendanceRate }}</q-chip>
             </div>
           </q-card-section>
         </q-card>
