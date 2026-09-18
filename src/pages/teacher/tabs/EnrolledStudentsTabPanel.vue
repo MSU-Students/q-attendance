@@ -270,10 +270,10 @@ async function studentsFromClipboard() {
         </q-list>
       </q-btn-dropdown>
       <q-btn-group>
-        <q-btn dense @click="filter = 'All'">ALL</q-btn>
-        <q-btn dense @click="filter = 'critical'">CRI</q-btn>
-        <q-btn dense @click="filter = 'drop'">DRP</q-btn>
-        <q-btn dense @click="filter = 'perfect'">PRF</q-btn>
+        <q-btn :outline="filter !== 'All'" dense @click="filter = 'All'">ALL</q-btn>
+        <q-btn :outline="filter !== 'critical'" dense @click="filter = 'critical'">CRI</q-btn>
+        <q-btn :outline="filter !== 'drop'" dense @click="filter = 'drop'">DRP</q-btn>
+        <q-btn :outline="filter !== 'perfect'" dense @click="filter = 'perfect'">PRF</q-btn>
       </q-btn-group>
     </div>
 
