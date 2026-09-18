@@ -8,7 +8,7 @@ import { useRoute } from 'vue-router';
 import AttendanceReportDialog from '../AttendanceReportDialog.vue';
 import { useAttendanceStore } from 'src/stores/attendance-store';
 import { ClassMeetingModel } from 'src/models';
-
+type Filter = StudentEnrollment['reportStatus'] | 'All';
 const props = defineProps<{
   name: string;
   currentClass: ClassModel;
@@ -24,12 +24,16 @@ const activeClass = computed(() => {
   }
   return undefined;
 });
+const filter = ref<Filter>('All');
 const enrolledStudents = computed(() => {
-  return (
-    (activeClass.value?.enrolled || [])
-      //.filter((e) => e.status == 'active')
-      .sort((a, b) => a.email.localeCompare(b.email))
-  );
+  const students = (activeClass.value?.enrolled || [])
+    //.filter((e) => e.status == 'active')
+    .sort((a, b) => a.email.localeCompare(b.email));
+  if (filter.value == 'All') {
+    return students;
+  } else {
+    return students.filter((s) => s.reportStatus == filter.value);
+  }
 });
 const showNewStudentDialog = ref(false);
 const studentName = ref('');
@@ -265,6 +269,12 @@ async function studentsFromClipboard() {
           </q-item>
         </q-list>
       </q-btn-dropdown>
+      <q-btn-group>
+        <q-btn dense @click="filter = 'All'">ALL</q-btn>
+        <q-btn dense @click="filter = 'critical'">CRI</q-btn>
+        <q-btn dense @click="filter = 'drop'">DRP</q-btn>
+        <q-btn dense @click="filter = 'perfect'">PRF</q-btn>
+      </q-btn-group>
     </div>
 
     <q-list bordered separator>
